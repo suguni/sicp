@@ -191,3 +191,26 @@
 
 ;; 결론: 사각형의 밑변 길이와 높이를 가져오는 selector만 있으면
 ;; 면적과 둘레길이를 계산하는 프로시저는 그대로 사용할 수 있다.
+
+;; ch 2.1.3
+
+;; ex 2.4
+
+(define (cons-1 x y)
+  (lambda (m) (m x y)))
+
+(define (car-1 z)
+  (z (lambda (p q)  p)))
+
+;; a - (car (cons x y)) => x 확인하기.
+; > (car (lambda (m) (m x y)))
+; > ((lambda (m) (m x y)) (lambda (p q) p))
+; > ((lambda (p q) p) x y)
+; > x
+
+;; b - cdr 정의하기
+(define (cdr-1 z)
+  (z (lambda (p q) q)))
+
+(car-1 (cons-1 'x 'y)) ;; 'x
+(cdr-1 (cons-1 'x 'y)) ;; 'y
