@@ -214,3 +214,41 @@
 
 (car-1 (cons-1 'x 'y)) ;; 'x
 (cdr-1 (cons-1 'x 'y)) ;; 'y
+
+;; ex 2.5
+;; 수와 산술 연산만으로 정수 쌍 표현하기
+(define (cons-2 a b) (* (expt 2 a) (expt 3 b)))
+;; (define (car-2 z) (some-process z 2))
+;; (define (cdr-2 z) (some-process z 3))
+;; some-process는 z를 2 또는 3으로 나눠서 나머지가 0가 아닌때까지의 나누는 회수를 반환하는 프로시저다.
+;; 근데... 이렇게 하는게 산술 연산만으로 정수 쌍 표현한다고 할 수 있나?
+;; 아래 divide-count 프로시저가 구현한 것.
+
+;(define (divide-count v i)
+;  (if (zero? (remainder v i))
+;      (+ 1 (divide-count (/ v i) i))
+;      0))
+
+(define (divide-count value divisor)
+  (define (iter v n)
+    (if (zero? (remainder v divisor))
+        (iter (/ v divisor) (+ n 1))
+        n))
+  (iter value 0))
+
+(define (car-2 z) (divide-count z 2))
+(define (cdr-2 z) (divide-count z 3))
+
+;; test
+(car-2 (cons-2 20 3)) ;; 10
+(cdr-2 (cons-2 2 30)) ;; 9
+
+;; ex 2.6
+(define zero (lambda (f) (lambda (x) x)))
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+
+;; one, two, + 프로시저 정의하기
+
+;; 먼저 (add-1 zero)를 맞바꿈 계산범으로 풀어보자.
+(add-1 zero)
