@@ -291,15 +291,41 @@
 (define (print-interval x)
   (newline)
   (display (lower-bound x))
-  (display "--")
+  (display "~")
   (display (upper-bound x)))
 
 (print "ex 2.7 interval data test")
-(print-interval (make-interval 2 6)) ;; 2--6
-(print-interval (make-interval 6 2)) ;; 2--6
+(print-interval (make-interval 2 6)) ;; 2~6
+(print-interval (make-interval 6 2)) ;; 2~6
 (print-interval (add-interval (make-interval 2 6)
-                              (make-interval 1 4))) ;; 3--10
+                              (make-interval 1 4))) ;; 3~10
 (print-interval (mul-interval (make-interval 2 6)
-                              (make-interval 1 4))) ;; 2--24
+                              (make-interval 1 4))) ;; 2~24
 (print-interval (div-interval (make-interval 2 6)
-                              (make-interval 1 4))) ;; 1/2--6
+                              (make-interval 1 4))) ;; 1/2~6
+
+;; ex2.8
+;;; 구간의 뺄샘: 두 구간의 하한끼리, 상한끼리 뺀 값을 새로운 하한과 상한으로 하는 구간 삑X!!!
+;(define (sub-interval x y)
+;  (make-interval (- (lower-bound x) (lower-bound y))
+;                 (- (upper-bound x) (upper-bound y))))
+;
+;;; sub-interval test
+;(print-interval (sub-interval (make-interval 10 20)
+;                              (make-interval 5 10))) ;; 5~10
+;(print-interval (sub-interval (make-interval 0 10)
+;                              (make-interval -10 20))) ;; -10~10 맞는건가???
+
+;; 위 아닌듯... --;
+
+;; solution(http://community.schemewiki.org/?sicp-ex-2.8)에 있는거처럼
+;; x-y 를 x + (-y)로 보고 짜 보면
+(define (sub-interval x y)
+  (add-interval x (make-interval (- (upper-bound y))
+                                 (- (lower-bound y)))))
+;; sub-interval test
+(print-interval (sub-interval (make-interval 10 20)
+                              (make-interval 5 10))) ;; 0~15
+(print-interval (sub-interval (make-interval 0 10)
+                              (make-interval -10 20))) ;; -20~20
+
