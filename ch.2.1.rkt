@@ -245,10 +245,61 @@
 
 ;; ex 2.6
 (define zero (lambda (f) (lambda (x) x)))
-(define (add-1 n)
-  (lambda (f) (lambda (x) (f ((n f) x)))))
+(define (add-1 n) (lambda (f) (lambda (x) (f ((n f) x)))))
 
 ;; one, two, + 프로시저 정의하기
 
 ;; 먼저 (add-1 zero)를 맞바꿈 계산범으로 풀어보자.
 (add-1 zero)
+
+
+;; ch 2.1.4
+
+(newline)
+(print "ch 2.1.4 interval")
+(newline)
+
+;; ex 2.7
+(define (make-interval a b) (cons a b))
+
+;; (define (lower-bound x) (car x))
+;; (define (upper-bound x) (cdr x))
+
+;; 위와같이 짤 수도 있는데,
+;; 위의 make-interval 프로시저에서 a와 b값을 체크하는 프로세스가 없으므로 아래처럼 짜는게 좋을 듯.
+(define (lower-bound x) (min (car x) (cdr x)))
+(define (upper-bound x) (max (car x) (cdr x)))
+
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+(define (div-interval x y)
+  (mul-interval x
+                (make-interval (/ 1.0 (upper-bound y))
+                               (/ 1.0 (lower-bound y)))))
+
+;; test interval
+(define (print-interval x)
+  (newline)
+  (display (lower-bound x))
+  (display "--")
+  (display (upper-bound x)))
+
+(print "ex 2.7 interval data test")
+(print-interval (make-interval 2 6)) ;; 2--6
+(print-interval (make-interval 6 2)) ;; 2--6
+(print-interval (add-interval (make-interval 2 6)
+                              (make-interval 1 4))) ;; 3--10
+(print-interval (mul-interval (make-interval 2 6)
+                              (make-interval 1 4))) ;; 2--24
+(print-interval (div-interval (make-interval 2 6)
+                              (make-interval 1 4))) ;; 1/2--6
