@@ -458,3 +458,20 @@
 ;; 위의 경우 구간별 U와 L의 부호를 확인하는 부분들이 반복되고 있음.
 ;; cond가 아닌 if 문으로 하면 확인 프로세스를 줄일 수 있으나 코드 보기가 어려워져서 안 좋음. ^^;
 
+
+;; ex 2.12
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+
+(define (center i)
+  (/ (+ (upper-bound i) (lower-bound i)) 2))
+
+(define (width i)
+  (/ (- (upper-bound i) (lower-bound i)) 2))
+
+(define (make-center-percent c p)
+  (make-center-width c (* c (/ p 100.0))))
+
+(define (percent i)
+  (* (/ (width i) (center i)) 100.0))
+
