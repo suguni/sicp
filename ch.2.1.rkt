@@ -402,5 +402,59 @@
                                    (/ 1.0 (lower-bound y))))))
 
 ;; error! case
-(div-interval2 (make-interval 5 10) (make-interval 0 5))
+;; (div-interval2 (make-interval 5 10) (make-interval 0 5))
+
+;; ex 2.11
+;; mul-interval 다시 짜기.
+;; 입력 구간의 부호에 따른 결과 구간의 L, U table
+;; | Lx | Ux | Ly | Uy | L     | U
+;; | +  | +  | +  | +  | Lx*Ly | Ux*Uy
+;; | +  | +  | -  | +  | Ux*Ly | Ux*Uy
+;; | +  | +  | -  | -  | Ux*Ly | Lx*Uy
+;; | -  | +  | +  | +  | Lx*Uy | Ux*Uy
+;; | -  | +  | -  | +  | Lx*Uy | Ux*Uy  2가지 경우 나올 수 있음.
+;;                       Ux*Ly | Lx*Ly
+;; | -  | +  | -  | -  | Ux*Ly | Lx*Ly
+;; | -  | -  | +  | +  | Lx*Uy | Ux*Ly
+;; | -  | -  | -  | +  | Lx*Uy | Lx*Ly
+;; | -  | -  | -  | -  | Ux*Uy | Lx*Ly
+
+(define (mul-interval2 x y)
+  (let ((Lx (lower-bound x))
+        (Ux (upper-bound x))
+        (Ly (lower-bound y))
+        (Uy (upper-bound y)))
+    (cond ((and (>= Lx 0) (>= Ux 0) (>= Ly 0) (>= Uy 0)) (make-interval (* Lx Ly) (* Ux Uy)))
+          ((and (>= Lx 0) (>= Ux 0) (<  Ly 0) (>= Uy 0)) (make-interval (* Ux Ly) (* Ux Uy)))
+          ((and (>= Lx 0) (>= Ux 0) (<  Ly 0) (<  Uy 0)) (make-interval (* Ux Ly) (* Lx Uy)))
+          ((and (<  Lx 0) (>= Ux 0) (>= Ly 0) (>= Uy 0)) (make-interval (* Lx Uy) (* Ux Uy)))
+          ((and (<  Lx 0) (>= Ux 0) (<  Ly 0) (>= Uy 0)) (make-interval (min (* Lx Uy) (* Ux Ly))
+                                                                        (max (* Ux Uy) (* Lx Ly))))
+          ((and (<  Lx 0) (>= Ux 0) (<  Ly 0) (<  Uy 0)) (make-interval (* Ux Ly) (* Lx Ly)))
+          ((and (<  Lx 0) (<  Ux 0) (>= Ly 0) (>= Uy 0)) (make-interval (* Lx Uy) (* Ux Ly)))
+          ((and (<  Lx 0) (<  Ux 0) (<  Ly 0) (>= Uy 0)) (make-interval (* Lx Uy) (* Lx Ly)))
+          ((and (<  Lx 0) (<  Ux 0) (<  Ly 0) (<  Uy 0)) (make-interval (* Ux Uy) (* Lx Ly))))))
+          
+(let ((x-P (make-interval 5 10))
+      (x-S (make-interval -5 5))
+      (x-M (make-interval -10 -5))
+      (y-P (make-interval 2 4))
+      (y-S (make-interval -2 2))
+      (y-M (make-interval -4 -2)))
+  (newline)
+  (print "================================================================================")
+  (newline)
+  (print "ex 2.11 case test")
+  (print-interval (mul-interval2 x-P y-P))  ;; 10~40
+  (print-interval (mul-interval2 x-P y-S))  ;; -20~20
+  (print-interval (mul-interval2 x-P y-M))  ;; -40~-10
+  (print-interval (mul-interval2 x-S y-P))  ;; -20~20
+  (print-interval (mul-interval2 x-S y-S))  ;; -10~10
+  (print-interval (mul-interval2 x-S y-M))  ;; -20~20
+  (print-interval (mul-interval2 x-M y-P))  ;; -40~-10
+  (print-interval (mul-interval2 x-M y-S))  ;; -20~20
+  (print-interval (mul-interval2 x-M y-M))) ;; 10~40
+
+;; 위의 경우 구간별 U와 L의 부호를 확인하는 부분들이 반복되고 있음.
+;; cond가 아닌 if 문으로 하면 확인 프로세스를 줄일 수 있으나 코드 보기가 어려워져서 안 좋음. ^^;
 
