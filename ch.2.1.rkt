@@ -361,7 +361,7 @@
     (newline)
     (print "================================================================================")
     (newline)
-    (print "interval */ op. & width test")
+    (print "ex 2.9) interval */ op. & width test")
     (newline)
     (print "int1:      ")
     (print-interval2 int1)
@@ -382,3 +382,25 @@
     (print-interval2 div-int)
     (print " - width: ")
     (print (width-interval div-int))))
+
+;; ex 2.10
+;; 문제에 모호한점 있음.
+;;
+;; 문제에서 "0이 들어 있는 구간 값으로 나눠야 할 때" 라는 말은 구간이 0에 걸쳐 있다는 말로 해석됨
+;; 즉, -1 ~ 1 구간처럼.
+;; 원서에도 "it is not clear what it means to divide by an interval that spans zero" 라고 되어 있는데,
+;; 원서와 번역본이 동일한 느낌.
+;;
+;; div-interval 프로시저에서 문제가 되는 케이스는
+;; 나누는 구간(div-interval 프로시저에서 y 인자)의 lower나 upper가 0인 경우이다.
+;; 따라서, 0과 관련된 부분은 구간의 upper나 lower에 0이 존재한다는 것으로 해석하고 풀이함.
+(define (div-interval2 x y)
+  (if (= (* (upper-bound y) (lower-bound y)) 0)
+      (error "divide by 0")
+      (mul-interval x
+                    (make-interval (/ 1.0 (upper-bound y))
+                                   (/ 1.0 (lower-bound y))))))
+
+;; error! case
+(div-interval2 (make-interval 5 10) (make-interval 0 5))
+
