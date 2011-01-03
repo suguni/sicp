@@ -294,6 +294,11 @@
   (display "~")
   (display (upper-bound x)))
 
+(define (print-interval2 x)
+  (display (lower-bound x))
+  (display "~")
+  (display (upper-bound x)))
+
 (print "ex 2.7 interval data test")
 (print-interval (make-interval 2 6)) ;; 2~6
 (print-interval (make-interval 6 2)) ;; 2~6
@@ -324,8 +329,56 @@
   (add-interval x (make-interval (- (upper-bound y))
                                  (- (lower-bound y)))))
 ;; sub-interval test
+(newline)
+(print "================================================================================")
+(newline)
+(print "ex 2.8 sub-interval test")
 (print-interval (sub-interval (make-interval 10 20)
                               (make-interval 5 10))) ;; 0~15
 (print-interval (sub-interval (make-interval 0 10)
                               (make-interval -10 20))) ;; -20~20
 
+
+;; ex 2.9
+(define (width-interval x)
+  (/ (- (upper-bound x) (lower-bound x)) 2.0))
+
+;; 아래와 같은 구간 x1, x2가 있을 때
+;; 구간 x1: l1, u1, w1 = (u1-l1)/2
+;; 구간 x2: l2, u2, w2 = (u2-l2)/2
+
+;; 구간의 덧셈
+;; 구간 x1+x2: l1+l2, u1+u2, w3 = ((u1+u2) - (l1+l2)) / 2 = ((u1-l1) + (u2-l2))/2 = (u1-l1)/2 + (u2-l2)/2 = w1 + w2
+
+;; 구간의 뺄셈
+;; 구간 x1-x2: l1+(-u2), u1+(-l2), w3 = ((u1-l2) - (l1-u2))/2 = ((u1-l1) - (u2-l2))/2 = (u1-l1)/2 - (u2-l2)/2 = w1 - w2
+
+;; 구간의 곳셈이 그렇지 못한 보기
+(let ((int1 (make-interval 0 10))
+      (int2 (make-interval 5 10)))
+  (let ((mul-int (mul-interval int1 int2))
+        (div-int (div-interval int1 int2)))
+    (newline)
+    (print "================================================================================")
+    (newline)
+    (print "interval */ op. & width test")
+    (newline)
+    (print "int1:      ")
+    (print-interval2 int1)
+    (print " - width: ")
+    (print (width-interval int1))
+    (newline)
+    (print "int2:      ")
+    (print-interval2 int2)
+    (print " - width: ")
+    (print (width-interval int2))
+    (newline)
+    (print "int1*int2: ")
+    (print-interval2 mul-int)
+    (print " - width: ")
+    (print (width-interval mul-int))
+    (newline)
+    (print "int1/int2: ")
+    (print-interval2 div-int)
+    (print " - width: ")
+    (print (width-interval div-int))))
