@@ -481,3 +481,89 @@
   (* (/ (width i) (center i)) 100.0))
 
 ;; ex 2.13
+;; 두 구간의 곱셈 결과 구간의 tolerance를 계산하는 간단한 식.
+;; 단, t1, t2는 모두 양수이고 작은값이라고 가정한다.
+;; int1(c1, t1) * int2(c2, t2) = int3(c3, t3) 이면
+;; t3 = t1 + t2 이다.
+;; 왜? 경험적으로 해 보면 그렇게 나온다.
+(percent (mul-interval (make-center-percent 10 5)
+                       (make-center-percent 20 2))) ;; => 약 7
+
+
+;; 병렬 저항 계산식
+;(define (par1 r1 r2)
+;  (div-interval (mul-interval r1 r2)
+;                (add-interval r1 r2)))
+;
+;(define (par2 r1 r2)
+;  (let ((one (make-interval 1 1)))
+;    (div-interval one
+;                  (add-interval (div-interval one r1)
+;                                (div-interval one r2)))))
+
+;; ex 2.14
+;; A / A, A / B
+(define I-A (make-center-percent 10 0.1))
+(define I-B (make-center-percent 5 0.2))
+(newline)
+(div-interval I-A I-A) ;; => '(0.998 . 1.002), 1이어야 하는데, 그렇지 안음.
+                       ;; 그런데 구간 연산에서 1의 의미는 무엇인가? - 구간  * 연산에 대한 항등원
+(div-interval I-A I-B) ;; ???
+
+;; <문제점 해석>
+;; A * B = C <=> A = C / A 성립하지 않음.
+;; (mul-interval (make-interval 1 2) (make-interval 2 4)) => '(2 . 8)
+;; (div-interval (make-interval 2 8) (make-interval 2 4)) => '(0.5 . 4.0) => '(1 . 2)가 나와야 하는것 아닌가?
+;; A / A = I 성립하지 않음.(I는 항등원으로 (1 . 1)로 본다.)
+;; (div-interval (make-interval 2 4) (make-interval 2 4)) => '(0.5 . 2.0)
+
+;; 만일 ex 2.13의 가정을 바탕으로 다음과 같이 짠다면?
+(define (mul-interval-new i1 i2)
+  (make-center-percent (* (center i1) (center i2))
+                       (+ (percent i1) (percent i2))))
+(define (div-interval-new i1 i2)
+  (make-center-percent (/ (center i1) (center i2))
+                       (- (percent i1) (percent i2))))
+
+(define icp1 (make-center-percent 10 1))
+(define icp2 (make-center-percent 5 1))
+(define icp3 (mul-interval-new icp1 icp2))
+(define icp4 (div-interval-new icp3 icp1)) ;; == icp2 ???
+
+(newline)
+(center icp3)
+(percent icp3)
+(center icp4) ;; 5
+(percent icp4) ;; 1
+
+;; mul-interval-new, div-interval-new 는 위에서 언급한 문제점이 해소됨.
+;; 저항 문제를 다시 계산해 보면
+(define (par1 r1 r2)
+  (div-interval-new (mul-interval-new r1 r2)
+                    (add-interval r1 r2)))
+
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1)))
+    (div-interval-new one
+                      (add-interval (div-interval-new one r1)
+                                    (div-interval-new one r2)))))
+
+(newline)
+(let ((p1 (par1 icp1 icp2))
+      (p2 (par2 icp1 icp2)))
+  (display (center p1))
+  (newline)
+  (display (percent p1))
+  (newline)
+  (display (center p2))
+  (newline)
+  (display (percent p2)))
+
+;; 저항 계산 문제 해결됨. !!
+
+;; ex 2.15
+;; 동일한 대수식이 다른 결과를 가진다면 그 연산의 정의가 잘못된 것임
+;; 문제에서는 값이 아닌 구간의 연산이므로 연산 과정이 많으면 많을수록 오류가 점점 커진다고 볼 수 있다.
+
+;; ex 2.16
+;; ex 2.14에서 만든 mul-interval-new, div-interval-new 사용.
