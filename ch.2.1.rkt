@@ -528,7 +528,7 @@
 (define icp1 (make-center-percent 10 1))
 (define icp2 (make-center-percent 5 1))
 (define icp3 (mul-interval-new icp1 icp2))
-(define icp4 (div-interval-new icp3 icp1)) ;; == icp2 ???
+(define icp4 (div-interval-new icp3 icp1)) ;; == icp2
 
 (newline)
 (center icp3)
