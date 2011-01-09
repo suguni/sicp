@@ -523,7 +523,7 @@
                        (+ (percent i1) (percent i2))))
 (define (div-interval-new i1 i2)
   (make-center-percent (/ (center i1) (center i2))
-                       (- (percent i1) (percent i2))))
+                       (- (percent i1) (percent i2))))  ;; minus percent???
 
 (define icp1 (make-center-percent 10 1))
 (define icp2 (make-center-percent 5 1))
@@ -559,11 +559,16 @@
   (newline)
   (display (percent p2)))
 
-;; 저항 계산 문제 해결됨. !!
+;; 저항 계산 문제 해결됨. !! *** 삑!! ***
+
+;; div-interval-new 프로시저가 문제가 있음
+;; 위 식으로 계산하면 항상 int1 / int2 = int2 / int1 이 나옴 틀림.
 
 ;; ex 2.15
 ;; 동일한 대수식이 다른 결과를 가진다면 그 연산의 정의가 잘못된 것임
 ;; 문제에서는 값이 아닌 구간의 연산이므로 연산 과정이 많으면 많을수록 오류가 점점 커진다고 볼 수 있다.
 
 ;; ex 2.16
-;; ex 2.14에서 만든 mul-interval-new, div-interval-new 사용.
+;; ex 2.14에서 만든 mul-interval-new, div-interval-new 사용.  *** 삑!! ***
+;; div-interval-new 잘못됨.
+;; 어떻게 풀어야 할지 잘 모르겠음.
