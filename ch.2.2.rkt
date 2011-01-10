@@ -82,3 +82,22 @@
     (cons x (iter items))))
 ;; OK!
 
+(define (square x)
+  (* x x))
+
+;; p.136
+(define (map proc items)
+  (if (null? items)
+      (list)
+      (cons (proc (car items)) (map proc (cdr items)))))
+
+;; ex 2.21
+;; (square-list (list 1 2 3 4)) => (1 4 9 16) 이 되게 두 가지 방법으로 프로시저 짜기
+(define (square-list-1 items)
+  (if (null? items)
+      (list)
+      (cons (* (car items) (car items))
+            (square-list-1 (cdr items)))))
+
+(define (square-list-2 items)
+  (map (lambda (x) (* x x)) items))
