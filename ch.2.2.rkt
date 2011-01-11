@@ -171,3 +171,51 @@
       (list)
       (begin (proc (car items))
              (for-each-4 proc (cdr items)))))
+
+;; ch 2.2.2 계층구조
+(define (count-leaves tree)
+  (cond ((null? tree) 0)
+        ((pair? tree) (+ (count-leaves (car tree)) (count-leaves (cdr tree))))
+        (else 1)))
+
+;;(define x (cons (list 1 2) (list 3 4)))
+
+;; ex 2.24
+(list 1 (list 2 (list 3 4))) ;; => (1 (2 (3 4)))
+
+;; ex 2.25
+(car (cdr (car (cdr (cdr
+                     (list 1 3 (list 5 7) 9)
+                     )))))
+(car (car
+      (list (list 7))
+      ))
+(car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr
+                                                        (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7))))))
+                                                        ))))))))))))
+     
+
+;; ex 2.26
+;(define x (list 1 2 3))
+;(define y (list 4 5 6))
+;(append x y) ;; => (1 2 3 4 5 6)
+;(cons x y)   ;; => ((1 2 3) 4 5 6)
+;(list x y)   ;; => ((1 2 3) (4 5 6))
+
+;; ex 2.27
+;; deep-reverse 프로시저 만들기
+(define (deep-reverse items)
+  (define (iter ins outs)
+    (if (null? ins)
+        outs
+        (let ((item (car ins)))
+          (iter (cdr ins)
+                (cons (if (pair? item)
+                          (iter item (list))
+                          item)
+                      outs)))))
+  (iter items (list)))
+
+;(reverse (list (list 1 2) (list 3 4))) ;; => ((3 4) (1 2))
+;(deep-reverse (list (list 1 2) (list 3 4))) ;; => ((4 3) (2 1))
+;(deep-reverse (list (list 1 2 3) 4 (list 5 6 (list 7 8 9) 10 11))) ;; => ((11 10 (9 8 7) 6 5) 4 (3 2 1))
