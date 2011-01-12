@@ -219,3 +219,36 @@
 ;(reverse (list (list 1 2) (list 3 4))) ;; => ((3 4) (1 2))
 ;(deep-reverse (list (list 1 2) (list 3 4))) ;; => ((4 3) (2 1))
 ;(deep-reverse (list (list 1 2 3) 4 (list 5 6 (list 7 8 9) 10 11))) ;; => ((11 10 (9 8 7) 6 5) 4 (3 2 1))
+
+;; ex 2.28
+;; (fringe (list (list 1 2) (list 3 4))) ; => (1 2 3 4)
+(define (fringe tree)
+  (define (iter ins result)
+    (if (null? ins)
+        result
+        (if (not (pair? (car ins)))
+            (iter (cdr ins) (cons (car ins) result))
+            (iter (cdr ins) (append (iter (car ins) (list)) result)))))
+  (reverse (iter tree (list))))
+;; 이거 왠지 무식한 방법인듯
+
+(define (fringe-2 tree)
+  (if (null? tree)
+      (list)
+      (let ((first (car tree))
+            (next (cdr tree)))
+        (if (pair? first)
+            (append (fringe-2 first) (fringe-2 next))
+            (cons first (fringe-2 next))))))
+;; 이것도 append를 사용했는데..
+
+(define (fringe-3 tree)
+  (define (iter tree result)
+    (if (null? tree)
+        result
+        (if (pair? tree)
+            (iter (car tree) (iter (cdr tree) result))
+            (cons tree result))))
+  (iter tree (list)))
+;; solution 참조. http://community.schemewiki.org/?sicp-ex-2.28
+
