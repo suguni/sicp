@@ -252,3 +252,73 @@
   (iter tree (list)))
 ;; solution 참조. http://community.schemewiki.org/?sicp-ex-2.28
 
+;; ex 2.29
+(define (make-mobile left right)
+  (list left right))
+(define (make-branch length structure)
+  (list length structure))
+
+;; a.
+(define (left-branch mobile)
+  (car mobile))
+(define (right-branch mobile)
+  (car (cdr mobile)))
+(define (branch-length branch)
+  (car branch))
+(define (branch-structure branch)
+  (car (cdr branch)))
+
+;; b.
+;(define (total-weight mobile)
+;  (if (null? mobile)
+;      0
+;      (let ((left (left-branch mobile))
+;            (right (right-branch mobile)))
+;        (+ (if (pair? (branch-structure left)) (total-weight (branch-structure left)) (branch-structure left))
+;           (if (pair? (branch-structure right)) (total-weight (branch-structure right)) (branch-structure right))))))
+;; 뭔가 중복이 많고... ???
+
+(define (branch-weight branch)
+  (let ((struct (branch-structure branch)))
+    (if (pair? struct)
+        (total-weight struct)
+        struct)))
+
+(define (total-weight mobile)
+  (+ (branch-weight (left-branch mobile))
+     (branch-weight (right-branch mobile))))
+
+;; mobile, branch는 정확한 형태로 구성되어 있다고 가정됨.
+;; make-mobile의 두 인자는 항상 make-branch로 만들어진 것이고 null이 오지 않음, make-branch도 인자로 null이 아님
+
+;; c.
+(define (branch-torque branch)
+  (* (branch-length branch) (branch-weight branch)))
+
+(define (mobile-balanced? mobile)
+  (define (branch-balanced? branch)
+    (let ((structure (branch-structure branch)))
+      (if (pair? structure)
+          (mobile-balanced? structure)
+          true)))
+  (let ((left (left-branch mobile))
+        (right (right-branch mobile)))
+    (and (= (branch-torque left)
+            (branch-torque right))
+         (branch-balanced? left)
+         (branch-balanced? right))))
+
+;; d.
+;; make-mobile, make-branch를 다음처럼 바꾸면?
+(define (make-mobile-2 left right)
+  (cons left right))
+(define (make-branch-2 length structure)
+  (cons length structure))
+;; 프로그램 수정은? => selector만 아래처럼 변경하면 된다.
+(define (right-branch-2 mobile) (cdr mobile))
+(define (branch-structure-2 branch) (cdr branch))
+
+;; 이건 naming을 통일하기 위함일뿐.
+(define left-branch-2 left-branch)
+(define branch-length-2 branch-length)
+
