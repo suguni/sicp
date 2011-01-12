@@ -322,3 +322,48 @@
 (define left-branch-2 left-branch)
 (define branch-length-2 branch-length)
 
+;; tree mapping
+
+;; ex 2.30
+;; (square-tree (list 1 (list 2 (list 3 4) 5) (list 6 7))) => (1 (4 (9 16) 25) (36 49))
+
+;; map version
+(define (square-tree-1 tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+             (square-tree-1 sub-tree)
+             (square sub-tree)))
+       tree))
+
+;; recursive version
+(define (square-tree-2 tree)
+  (cond ((null? tree) (list))
+        ((not (pair? tree)) (square tree))
+        (else (cons (square-tree-2 (car tree))
+                    (square-tree-2 (cdr tree))))))
+
+;; ex 2.31
+;; square-tree를 다음과 같이 사용할 수 있게 tree-map 프로시저 정의
+;(define (square-tree tree)
+;  (tree-map square tree))
+(define (tree-map proc tree)
+  (cond ((null? tree) (list))
+        ((not (pair? tree)) (proc tree))
+        (else (cons (tree-map proc (car tree))
+                    (tree-map proc (cdr tree))))))
+(define (square-tree-3 tree)
+  (tree-map square tree))
+
+;; ex 2.32
+(define (subsets s)
+  (if (null? s)
+      (list (list))
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (i) (cons (car s) i)) rest)))))
+
+;; 아래의 순서
+;1.(subsets (list 1 2 3)) 8.=> (append (() (3) (2) (2 3)) ((cons 1 ()) (cons 1 (3)) (cons 1 (2)) (cons 1 (2 3))))
+;                           => (append (() (3) (2) (2 3)) ((1) (1 3) (1 2) (1 2 3))) => (() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
+;2.(subsets (list 2 3))   7.=> (append (() (3)) ((cons 2 ()) (cons 2 (3)))) => (append (() (3)) ((2) (2 3))) => (() (3) (2) (2 3))
+;3.(subsets (list 3))     6.=> (append (()) ((cons 3 (())))) => (append (()) ((3))) => (() (3))
+;4.(subsets (list))       5.=> (())
