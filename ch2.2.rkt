@@ -390,3 +390,71 @@
 ;2.(subsets (list 2 3))   7.=> (append (() (3)) ((cons 2 ()) (cons 2 (3)))) => (append (() (3)) ((2) (2 3))) => (() (3) (2) (2 3))
 ;3.(subsets (list 3))     6.=> (append (()) ((cons 3 (())))) => (append (()) ((3))) => (() (3))
 ;4.(subsets (list))       5.=> (())
+
+
+
+
+;; 1/13 study 시간 중 풀이
+(define (fringe tree)
+  (if (null? tree)
+      (list)
+      (append (if (pair? (car tree))
+                  (fringe (car tree))
+                  (list (car tree)))
+              (fringe (cdr tree)))))
+
+;(define (make-mobile left right)
+;  (list left right))
+;(define (make-branch length structure)
+;  (list length structure))
+;
+;(define (left-branch mobile)
+;  (car mobile))
+;(define (right-branch mobile)
+;  (car (cdr mobile)))
+;(define (branch-length branch)
+;  (car branch))
+;(define (branch-structure branch)
+;  (car (cdr branch)))
+
+(define (make-mobile left right)
+  (cons left right))
+(define (make-branch length structure)
+  (cons length structure))
+
+(define (left-branch mobile)
+  (car mobile))
+(define (right-branch mobile)
+  (cdr mobile))
+(define (branch-length branch)
+  (car branch))
+(define (branch-structure branch)
+  (cdr branch))
+
+(define (is-mobile? m)
+  (pair? m))
+
+(define (total-weight mobile)
+  (if (not (is-mobile? mobile))
+      mobile
+      (+ (total-weight (branch-structure (left-branch mobile)))
+         (total-weight (branch-structure (right-branch mobile))))))
+
+(define (torque branch)
+  (* (branch-length branch)
+     (total-weight (branch-structure branch))))
+
+(define (balanced? mobile)
+  (if (not (is-mobile? mobile))
+      #t
+      (let ((left (left-branch mobile))
+            (right (right-branch mobile)))
+        (and (= (torque left) (torque right))
+             (balanced? (branch-structure left))
+             (balanced? (branch-structure right))))))
+
+(define m1 (make-mobile (make-branch 5 10) (make-branch 10 5)))
+(define m2 (make-mobile (make-branch 5 50)
+                        (make-branch 10 (make-mobile (make-branch 5 20)
+                                                     (make-branch 20 5)))))
+
