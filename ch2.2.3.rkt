@@ -125,3 +125,72 @@
 
 (define (length sequence)
   (accumulate (lambda (x y) (+ y 1)) 0 sequence))
+
+;; ex 2.34
+;; accmulate로 a_nX^n + a_(n-1)X^(n-1) + ... + a1X + a0 계산하는 프로시저 짜기
+;; 위 식은 (...(((a_n*x + a_(n-1))*x + a_(n-2))*x + ... + a_1) + a_0와 같다. 이를 Horner's rule이라 함.
+;; http://en.wikipedia.org/wiki/Horner%27s_rule
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms)
+                (+ (* higher-terms x) this-coeff))
+              0
+              coefficient-sequence))
+;; (horner-eval 2 (list 1 3 0 5 0 1)) ; > 79
+;; coefficient-sequence의 순서가 반대다.
+;; x^5 + 5x^3 + 3x + 1 일때 coeff-seq는 (1 3 0 5 0 1)로 들어간다.
+
+;; ex 2.35
+;; accumulate로 count-leaves 짜기
+(define (count-leaves tree)
+  (accumulate +
+              0
+              (map (lambda (x) (length (enumerate-tree x))) tree)))
+;; accumulate와 map이 있어서 위와 같이 짰는데 그다지 효율적이지 않은듯. 차라리 아래와 같이 짜는게??
+(define (count-leaves-1 tree)
+  (length (enumerate-tree tree)))
+;; 아님 더 좋은 방법이 있을까?
+;; 이렇게도? 결국 처음것이랑 동일한듯.
+(define (count-leaves-2 tree)
+  (accumulate (lambda (seq sum)
+                (+ sum (length seq)))
+              0
+              (map (lambda (x) (enumerate-tree x)) tree)))
+
+;; ex 2.36
+;; (accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12))) => (22 26 30)
+;; 세번째 인자가 list를 가진 list이고 각 list의 길이는 동일하다.
+;; 값 list의 원소 순서대로 연산을 accumulate한 결과 list를 반환한다.
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      (list)
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+
+;; ex 2.37
+;; ex2.37.rkt 파일 참조
+
+;; ex 2.38
+(define fold-right accumulate)
+(define (fold-left op init seq)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter init seq))
+
+(fold-right / 1 (list 1 2 3)) ; > (/ 1 (/ 2 (/ 3 1))) > 3/2
+(fold-left / 1 (list 1 2 3))  ; > (/ (/ (/ 1 1) 2) 3) > 1/6
+(fold-right list (list) (list 1 2 3)) ; > (1 (2 (3 ())))
+(fold-left list (list) (list 1 2 3))  ; > (((() 1) 2) 3)
+;; fold-right와 fold-left의 연산 결과가 동일하려면 교환법칙이 성립하는 연산자여야 한다. 즉 A op. B = B op. A 이어야 한다.
+;; (= (fold-right * 1 (list 1 2 3)) (fold-left * 1 (list 1 2 3))) > #t
+;; (= (fold-right + 1 (list 1 2 3)) (fold-left + 1 (list 1 2 3))) > #t
+
+;; ex 2.39
+;; fold-left와 fold-right로 reverse 프로시저 정의하기
+(define (reverse-fr sequence)
+  (fold-right (lambda (x y) (append y (list x))) (list) sequence))
+
+(define (reverse-fl sequence)
+  (fold-left (lambda (x y) (cons y x)) (list) sequence))
