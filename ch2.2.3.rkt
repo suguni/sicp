@@ -5,6 +5,8 @@
 (define (square x)
   (* x x))
 
+(define nil '())
+
 ;; 나무 잎사귀들 중 홀수인것들의 제곱을 모두 더한 값을 반환
 ;(define (sum-odd-squares tree)
 ;  (if (null? tree)
