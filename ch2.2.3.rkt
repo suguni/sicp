@@ -167,6 +167,12 @@
                 (+ sum (length seq)))
               0
               (map (lambda (x) (enumerate-tree x)) tree)))
+;; Solution에서의 아름다운(?) 표현 (문제 출제의 궁극적 의도인듯?)
+(define (count-leaves-solution t) 
+   (accumulate + 
+               0 
+               (map (lambda (x) 1)  
+                    (enumerate-tree t)))) 
 
 ;; ex 2.36
 ;; (accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12))) => (22 26 30)
