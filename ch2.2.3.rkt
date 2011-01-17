@@ -114,6 +114,16 @@
                         (enumerate-interval 0 n)))))
 ;; accumulate 할 필요 없는데..
 
+;; Exercise 2.20 차례열 연산 인터페이스를 적용해보면..
+(define (same-parity first-n . lists)
+  (let ((condition? (if (even? first-n)
+                    even?
+                    odd?)))
+    (cons first-n (accumulate cons
+                              nil
+                              (filter condition?
+                                      lists)))))
+
 ;; 연습문제 ========================================================================
 
 ;; ex 2.33
