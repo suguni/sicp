@@ -194,3 +194,91 @@
 
 (define (reverse-fl sequence)
   (fold-left (lambda (x y) (cons y x)) (list) sequence))
+
+;(accumulate append
+;            (list)
+;            (map (lambda (j)
+;                   (map (lambda (i) (list i j)) 
+;                        (enumerate-interval 1 (- j 1))))
+;                 (enumerate-interval 1 n)))
+
+(define (flatmap proc seq)
+  (accumulate append (list) (map proc seq)))
+
+;; flatmap을 이용하여 위 프로시저 쓰면
+;(flatmap (lambda (j)
+;           (map (lambda (i) (list i j)) 
+;                (enumerate-interval 1 (- j 1))))
+;         (enumerate-interval 1 n))
+
+(define (prime? n)
+  (= (smallest-divisor n) n))
+
+(define (smallest-divisor n)
+  (define (divides? a b)
+    (= (remainder a b) 0))
+  (define (square x)
+    (* x x))
+  (define (find-divisor value test-div)
+    (cond ((divides? value test-div) test-div)
+          ((> (square test-div) value) value)
+          (else (find-divisor value (+ test-div 1)))))
+  (find-divisor n 2))
+
+;; prime-sum? list의 합이 소수인지?
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+
+;; make-pair-sum pair와 pair 요소의 합으로 구성된 list 만들기
+(define (make-pair-sum pair)
+  (let ((f (car pair))
+        (n (cadr pair)))
+    (list f n (+ f n))))
+
+;; prime-sum-pairs? 합이 소수인거
+(define (prime-sum-pairs? n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (flatmap (lambda (j)
+                          (map (lambda (i) (list i j)) 
+                               (enumerate-interval 1 (- j 1))))
+                        (enumerate-interval 1 n)))))
+
+(define (remove seq item)
+  (filter (lambda (x) (not (= item x))) seq))
+
+;; 위에서 사용한거 가지고 순열 만들기
+(define (permutation s)
+  (if (null? s)
+      (list (list))
+      (flatmap (lambda (m)
+                 (map (lambda (n) (cons m n))
+                      (permutation (remove s m)))) s)))
+;; 음.. 이해한건가??
+
+;; ex 2.40
+;; unique-pairs 프로시저 정의하기. 1 <= j < i <= n 을 만족하는 (i, j) 쌍의 차례열 뽑는 프로시저
+(define (unique-pairs n)
+  (flatmap (lambda (j)
+             (map (lambda (i) (list j i))
+                  (enumerate-interval 1 (- j 1))))
+           (enumerate-interval 1 n)))
+;; unique-pairs 프로시저를 이용하여 prime-sum-pairs 정의 줄이기
+(define (prime-sum-pairs-2? n)
+  (map make-pair-sum (filter prime-sum? (unique-pairs n))))
+
+;; 위의 prime-sum-pairs 프로시저를 2개의 프로시저로 구분한거 밖에 없는듯.
+
+;; ex 2.41
+;; 원문: Write a procedure to find all ordered triples of distinct positive integers i, j, and k less than or equal to a given integer n that sum to a given integer s.
+;; 입력이 n, s이고 결과는 합이 s가 되는 n 이하의 모든 i,j,k triples를 순서대로 뽑아라.
+;; 순서대로가 무슨 의미지?
+;; s=10, n=10 > (1 2 7) (1 3 6) (1 4 5) (2 3 5)
+;; s=10, n=5  > (1 4 5) (2 3 5)
+(define (triple-sum s n)
+  (filter (lambda (seq) (= (apply + seq) s))
+          (flatmap (lambda (i)
+                     (flatmap (lambda (j)
+                                (map (lambda (k) (list k j i)) (enumerate-interval 1 (- j 1))))
+                              (enumerate-interval 1 (- i 1))))
+                   (enumerate-interval 1 n))))
