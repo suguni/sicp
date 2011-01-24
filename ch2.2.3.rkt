@@ -282,3 +282,101 @@
                                 (map (lambda (k) (list k j i)) (enumerate-interval 1 (- j 1))))
                               (enumerate-interval 1 (- i 1))))
                    (enumerate-interval 1 n))))
+
+;; ex 2.42
+
+;; 체스판의 표현 방식 => 정답인 경우 체스판에 놓여진 queen들 표현 방식을 의미
+;; ((p11 p12 ... p1n)  > 1번째 답
+;;  (p21 p22 ... p2n)  > 2번째 답
+;;  ...
+;;  (pk1 pk2 ... pkn)) > k번째 답
+;; 각 p는 위치를 나타내는 pair이고 (list 세로 가로)로 표현한다.
+;; 
+;; 4x4 체스판인 경우
+;; (((1 2) (2 4) (3 1) (4 3))
+;;  ((1 3) (2 1) (3 4) (4 2)))
+
+;; queen-cols: k개의 세로줄에 퀸을 놓을 수 있는 모든 방법
+;; ((q1-pos q2-pos q3-pos ... qk-pos) (q1-pos q2-pos q3-pos ... qk-pos) ...)
+;; 이런식이 된다. 여기서 q1-pos는 1번 퀸의 위치를 나타내는 방법으로 pair 임.
+
+(define empty-board (list)) ;; procedure???
+
+(define (board-col position)
+  (car position))
+(define (board-row position)
+  (car (cdr position)))
+(define (make-pos col row)
+  (list col row))
+
+(define (safe? k positions)
+  ;; k번째 위치 얻기
+  (define (k-th n items)
+    (cond ((or (null? items) (> n k)) (list))
+          ((= n k) (car items))
+          ((< n k) (k-th (+ n 1) (cdr items)))))
+  
+  ;; p1과 p2가 서로 대각선상에 놓여져 있는지?
+  (define (diagonal-pos? p1 p2)
+    (= (abs (- (board-row p1) (board-row p2)))
+       (abs (- (board-col p1) (board-col p2)))))
+  
+  ;; iteration, 가로, 세로, 대각 위치가 동일하지 않으면 반복. 
+  (define (iter n items kth)
+    (cond ((null? items) #t)
+          ((= n k) (iter (+ n 1) (cdr items) kth))
+          (else (let ((p (car items)))
+                  (if (or (= (board-row p) (board-row kth))
+                          (= (board-col p) (board-col kth))
+                          (diagonal-pos? p kth))
+                      #f
+                      (iter (+ n 1) (cdr items) kth))))))
+  (iter 1 positions (k-th 1 positions)))
+
+;; adjoin-position 한 결과가
+;; ((q1-pos q2-pos q3-pos ... qk-pos) (q1-pos q2-pos q3-pos ... qk-pos) ...)
+;; (((q1-pos q2-pos q3-pos ... qk-pos qj-pos) (q1-pos q2-pos q3-pos ... qk-pos qj-pos) (q1-pos q2-pos q3-pos ... qk-pos qj-pos)... )
+;;  ((q1-pos q2-pos q3-pos ... qk-pos qj-pos) (q1-pos q2-pos q3-pos ... qk-pos qj-pos) (q1-pos q2-pos q3-pos ... qk-pos qj-pos)... ) ...)
+
+;; queens(하나의 답을 나타내는 차례열)에 (column, row)의 새로운 위치를 추가한다.
+(define (adjoin-position row column queens)
+  (append queens (list (make-pos column row))))
+
+(define (queens board-size)
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+;; ex 2.43
+;; ex 2.42를 아래처럼 바꾸면 많이 느려진다. 왜 그럴까?
+;;   42에서는 queen-cols이 한번만 호출된다. 물론 재귀된다.
+;;   43에서는 board-size 번만큼 queen-cols가 호출되고, 각각이 재귀된다.
+;;   board-size가 k 이면 k + (k-1) + (k-2) + (k-3) ... + 1 번 호출됨.
+;; ex 2.42가 T시간 걸린다고 하면 아래는 얼마나 걸릴까?
+;;   (T*T + T) / 2 
+
+(define (queens-2 board-size)
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (new-row)
+            (map (lambda (rest-of-queens)
+                   (adjoin-position new-row k rest-of-queens))
+                 (queen-cols (- k 1))))
+          (enumerate-interval 1 board-size)))))
+  (queen-cols board-size))
+
+;; ex 2.42 관련하여 많은 solution 있다. 확인!!!
+;; http://community.schemewiki.org/?sicp-ex-2.42
