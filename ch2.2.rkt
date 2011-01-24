@@ -395,13 +395,13 @@
 
 
 ;; 1/13 study 시간 중 풀이
-(define (fringe tree)
+(define (fringe-s tree)
   (if (null? tree)
       (list)
       (append (if (pair? (car tree))
-                  (fringe (car tree))
+                  (fringe-s (car tree))
                   (list (car tree)))
-              (fringe (cdr tree)))))
+              (fringe-s (cdr tree)))))
 
 ;(define (make-mobile left right)
 ;  (list left right))
