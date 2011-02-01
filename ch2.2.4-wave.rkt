@@ -1,5 +1,6 @@
 #lang racket
 
+;; http://planet.racket-lang.org/package-source/soegaard/sicp.plt/2/1/planet-docs/sicp-manual/index.html
 (require (planet "sicp.ss" ("soegaard" "sicp.plt" 2 1)))
 
 ;; original source - http://d.hatena.ne.jp/kazu-yamamoto/20100524/1274666251
