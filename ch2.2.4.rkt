@@ -173,6 +173,50 @@
                            (edge2-frame-2 frame))))))
 
 ;; 페인터 (p.176)
+;; ex 2.48
+(define (make-segment-1 v1 v2) (cons v1 v2))
+(define (start-segment-1 segment) (car segment))
+(define (end-segment-1 segment) (cdr segment))
+
+;; ex 2.49
+;; a
+(define border
+  (let ((v1 (make-vector 0.0 0.0))
+        (v2 (make-vector 1.0 0.0))
+        (v3 (make-vector 1.0 1.0))
+        (v4 (make-vector 0.0 1.0)))
+    (segments->painter (list (make-segment-1 v1 v2)
+                             (make-segment-1 v2 v3)
+                             (make-segment-1 v3 v4)
+                             (make-segment-1 v4 v1)))))
+(paint border)
+
+;; b
+(define x-line
+  (let ((v1 (make-vector 0.0 0.0))
+        (v2 (make-vector 1.0 0.0))
+        (v3 (make-vector 1.0 1.0))
+        (v4 (make-vector 0.0 1.0)))
+    (segments->painter (list (make-segment-1 v1 v3)
+                             (make-segment-1 v2 v4)))))
+(paint x-line)
+
+;; c
+(define diamond
+  (let ((v1 (make-vector 0.5 0.0))
+        (v2 (make-vector 1.0 0.5))
+        (v3 (make-vector 0.5 1.0))
+        (v4 (make-vector 0.0 0.5)))
+    (segments->painter (list (make-segment-1 v1 v2)
+                             (make-segment-1 v2 v3)
+                             (make-segment-1 v3 v4)
+                             (make-segment-1 v4 v1)))))
+(paint diamond)
+
+;; d
+;; 맨 처음에 wave로 정의되어 있으므로 생략
+
+;; 페인터를 변환해서 엮어 쓰는 방법 (p.178)
 (define (transform-painter-1 painter origin corner1 corner2)
   (lambda (frame)
     (let ((m (frame-coord-map frame)))
@@ -259,7 +303,7 @@
       (lower frame)
       (upper frame))))
 ;; test
-(paint (below-11 (rotate90-1 wave) wave))
+;(paint (below-11 (rotate90-1 wave) wave))
 
 (define (below-12 painter1 painter2)
   (rotate270-1
@@ -267,4 +311,4 @@
     (rotate90-1 painter2)
     (rotate90-1 painter1))))
 ;; test
-(paint (below-12 (rotate90-1 wave) wave))
+;(paint (below-12 (rotate90-1 wave) wave))
