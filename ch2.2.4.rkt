@@ -189,7 +189,7 @@
                              (make-segment-1 v2 v3)
                              (make-segment-1 v3 v4)
                              (make-segment-1 v4 v1)))))
-(paint border)
+;(paint border)
 
 ;; b
 (define x-line
@@ -199,7 +199,7 @@
         (v4 (make-vector 0.0 1.0)))
     (segments->painter (list (make-segment-1 v1 v3)
                              (make-segment-1 v2 v4)))))
-(paint x-line)
+;(paint x-line)
 
 ;; c
 (define diamond
@@ -211,7 +211,7 @@
                              (make-segment-1 v2 v3)
                              (make-segment-1 v3 v4)
                              (make-segment-1 v4 v1)))))
-(paint diamond)
+;(paint diamond)
 
 ;; d
 ;; 맨 처음에 wave로 정의되어 있으므로 생략
@@ -312,3 +312,56 @@
     (rotate90-1 painter1))))
 ;; test
 ;(paint (below-12 (rotate90-1 wave) wave))
+
+
+;; ex 2.52
+;; a
+(define wave-1 (segments->painter
+              (list
+                   (make-segment (make-vect 0.00 0.65) (make-vect 0.15 0.40))
+                   (make-segment (make-vect 0.15 0.40) (make-vect 0.30 0.60))
+                   (make-segment (make-vect 0.30 0.60) (make-vect 0.35 0.55))
+                   (make-segment (make-vect 0.35 0.55) (make-vect 0.25 0.00))
+                   (make-segment (make-vect 0.40 0.00) (make-vect 0.50 0.30))
+                   (make-segment (make-vect 0.50 0.30) (make-vect 0.60 0.00))
+                   (make-segment (make-vect 0.75 0.00) (make-vect 0.60 0.50))
+                   (make-segment (make-vect 0.60 0.50) (make-vect 1.00 0.15))
+                   (make-segment (make-vect 1.00 0.35) (make-vect 0.75 0.65))
+                   (make-segment (make-vect 0.75 0.65) (make-vect 0.60 0.65))
+                   (make-segment (make-vect 0.60 0.65) (make-vect 0.65 0.85))
+                   (make-segment (make-vect 0.65 0.85) (make-vect 0.60 1.00))
+                   (make-segment (make-vect 0.40 1.00) (make-vect 0.35 0.85))
+                   (make-segment (make-vect 0.35 0.85) (make-vect 0.40 0.65))
+                   (make-segment (make-vect 0.40 0.65) (make-vect 0.30 0.65))
+                   (make-segment (make-vect 0.30 0.65) (make-vect 0.15 0.60))
+                   (make-segment (make-vect 0.15 0.60) (make-vect 0.00 0.85))
+                   (make-segment (make-vect 0.40 0.90) (make-vect 0.48 0.90))
+                   (make-segment (make-vect 0.52 0.90) (make-vect 0.60 0.90))
+                   (make-segment (make-vect 0.42 0.78) (make-vect 0.48 0.76))
+                   (make-segment (make-vect 0.48 0.76) (make-vect 0.52 0.76))
+                   (make-segment (make-vect 0.52 0.76) (make-vect 0.58 0.78)))))
+;(paint wave-1)
+;; b - 아이디어가 안떠오름. pass
+;(define (corner-split painter n)
+;  (if (= n 0)
+;      painter
+;      (let ((up (up-split painter (- n 1)))
+;            (right (right-split painter (- n 1))))
+;        (let ((top-left (beside up up))
+;              (bottom-right (below right right))
+;              (corner (corner-split painter (- n 1))))
+;          (beside (below painter top-left)
+;                  (below bottom-right corner))))))
+;; c
+(define (square-limit-3 painter n)
+  (let ((combine4 (square-of-fours
+                   flip-horiz
+                   identity
+                   rotate180
+                   flip-vert)))
+    (combine4 (corner-split (flip-horiz painter) n))))
+;(paint-hires (square-limit-2 einstein 4))
+;(paint-hires (square-limit-3 einstein 4))
+;(paint-hires (square-limit-3 wave 4))
+;(paint-hires (square-limit-2 wave 4))
+
