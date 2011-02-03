@@ -135,28 +135,28 @@
 (define (edge1-frame-2-1 frame) (car (cdr frame)))
 (define (edge2-frame-2-1 frame) (car (cdr (cdr frame))))
 ;; test
-(let ((o (make-vector 3 3))
-      (e1 (make-vector 10 2))
-      (e2 (make-vector 2 10)))
-  (let ((f (make-frame-2-1 o e1 e2)))
-    (format "~a ~a ~a"
-            (equal? (origin-frame-2-1 f) o)
-            (equal? (edge1-frame-2-1 f) e1)
-            (equal? (edge2-frame-2-1 f) e2))))
+;(let ((o (make-vector 3 3))
+;      (e1 (make-vector 10 2))
+;      (e2 (make-vector 2 10)))
+;  (let ((f (make-frame-2-1 o e1 e2)))
+;    (format "~a ~a ~a"
+;            (equal? (origin-frame-2-1 f) o)
+;            (equal? (edge1-frame-2-1 f) e1)
+;            (equal? (edge2-frame-2-1 f) e2))))
 
 (define (make-frame-2-2 origin edge1 edge2) (cons origin (cons edge1 edge2)))
 (define (origin-frame-2-2 frame) (car frame))
 (define (edge1-frame-2-2 frame) (car (cdr frame)))
 (define (edge2-frame-2-2 frame) (cdr (cdr frame)))
 ;; test
-(let ((o (make-vector 3 3))
-      (e1 (make-vector 10 2))
-      (e2 (make-vector 2 10)))
-  (let ((f (make-frame-2-2 o e1 e2)))
-    (format "~a ~a ~a"
-            (equal? (origin-frame-2-2 f) o)
-            (equal? (edge1-frame-2-2 f) e1)
-            (equal? (edge2-frame-2-2 f) e2))))
+;(let ((o (make-vector 3 3))
+;      (e1 (make-vector 10 2))
+;      (e2 (make-vector 2 10)))
+;  (let ((f (make-frame-2-2 o e1 e2)))
+;    (format "~a ~a ~a"
+;            (equal? (origin-frame-2-2 f) o)
+;            (equal? (edge1-frame-2-2 f) e1)
+;            (equal? (edge2-frame-2-2 f) e2))))
 
 (define make-frame-2 make-frame-2-1)
 (define origin-frame-2 origin-frame-2-1)
@@ -172,4 +172,99 @@
                (scale-vect (ycor-vect v)
                            (edge2-frame-2 frame))))))
 
-;; 페인터
+;; 페인터 (p.176)
+(define (transform-painter-1 painter origin corner1 corner2)
+  (lambda (frame)
+    (let ((m (frame-coord-map frame)))
+      (let ((new-origin (m origin)))
+        (painter
+         (make-frame new-origin
+                     (sub-vect (m corner1) new-origin)
+                     (sub-vect (m corner2) new-origin)))))))
+
+(define (flip-vert-1 painter)
+  (transform-painter-1 painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+(define (shrink-to-upper-right painter)
+  (transform-painter-1 painter
+                       (make-vect 0.5 0.5)
+                       (make-vect 1.0 0.5)
+                       (make-vect 0.5 1.0)))
+
+(define (rotate90-1 painter)
+  (transform-painter-1 painter
+                       (make-vect 1.0 0.0)
+                       (make-vect 1.0 1.0)
+                       (make-vect 0.0 0.0)))
+
+(define (squash-inwards painter)
+  (transform-painter-1 painter
+                       (make-vect 0.0 0.0)
+                       (make-vect 0.65 0.35)
+                       (make-vect 0.35 0.65)))
+
+(define (beside-1 painter1 painter2)
+  (let ((mid-point (make-vect 0.5 0.0)))
+    (let ((left (transform-painter-1 painter1
+                                     (make-vect 0.0 0.0)
+                                     mid-point
+                                     (make-vect 0.0 1.0)))
+          (right (transform-painter-1 painter2
+                                      mid-point
+                                      (make-vect 1.0 0.0)
+                                      (make-vect 0.5 1.0))))
+      (lambda (frame)
+        (left frame)
+        (right frame)))))
+
+
+;; ex 2.50
+(define (flip-horiz-1 painter)
+  (transform-painter-1 painter
+                       (make-vect 1.0 0.0)
+                       (make-vect 0.0 0.0)
+                       (make-vect 1.0 1.0)))
+
+(define (rotate180-1 painter)
+;  (rotate90-1 (rotate90-1 painter))) ; 이렇게도 가능.
+  (transform-painter-1 painter
+                       (make-vect 1.0 1.0)
+                       (make-vect 0.0 1.0)
+                       (make-vect 1.0 0.0)))
+
+(define (rotate270-1 painter)
+;  (rotate90-1 (rotate90-1 (rotate90-1 painter)))) ; 이렇게도 가능.
+  (transform-painter-1 painter
+                       (make-vect 0.0 1.0)
+                       (make-vect 0.0 0.0)
+                       (make-vect 1.0 1.0)))
+
+;; 헷갈림!! transform-painter 인자는 변환되었을때 원래의 점이 어디로 갈 것인지를 의미.
+;; rotate270-1에서 0.0,1.0은 원래 원점이 0.0, 1.0 위치로 이동했음을 의미한다.
+
+;; ex 2.51
+(define (below-11 painter1 painter2)
+  (let ((lower (transform-painter-1 painter1
+                                    (make-vect 0.0 0.0)
+                                    (make-vect 1.0 0.0)
+                                    (make-vect 0.0 0.5)))
+        (upper (transform-painter-1 painter2
+                                    (make-vect 0.0 0.5)
+                                    (make-vect 1.0 0.5)
+                                    (make-vect 0.0 1.0))))
+    (lambda (frame)
+      (lower frame)
+      (upper frame))))
+;; test
+(paint (below-11 (rotate90-1 wave) wave))
+
+(define (below-12 painter1 painter2)
+  (rotate270-1
+   (beside-1
+    (rotate90-1 painter2)
+    (rotate90-1 painter1))))
+;; test
+(paint (below-12 (rotate90-1 wave) wave))
