@@ -225,6 +225,10 @@
          (make-frame new-origin
                      (sub-vect (m corner1) new-origin)
                      (sub-vect (m corner2) new-origin)))))))
+;; transform-painter 역할 :
+;; - paint 프로시저는 인자로 (frame (0 . 0) (128 . 0) (0 . 128))를 넘긴다.
+;; - 따라서 vector표현에서 128x128 형식의 좌표계로 변환이 필요하다.
+;; - frame-coord-map 으로 각 위치를 맵핑하고 sub-vect로 edge1, edge2의 좌표를 구해주면 완료.
 
 (define (flip-vert-1 painter)
   (transform-painter-1 painter
