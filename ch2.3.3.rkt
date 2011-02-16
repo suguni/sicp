@@ -43,9 +43,11 @@
               ((< x2 x1)
                (intersection-set-o set1 (cdr set2)))))))
 
+
 ;; ex 2.61
 (define (adjoin-set-o x set)
     (cond ((null? set) '())
           ((< x (car set)) (cons x set))
           ((= x (car set)) set)
           (else (cons (car set) (adjoin-set-o x (cdr set))))))
+; x가 추가될 위치조건 이후는 don't care~~
