@@ -62,6 +62,58 @@
 ;> (deriv '(* x y) 'x)
 ;> (deriv '(* (* x y) (+ x 3)) 'x)
 
+;; ex 2.56
+(define (deriv-2 exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv-2 (addend exp) var)
+                   (deriv-2 (augend exp) var)))
+        ((product? exp)
+         (make-sum
+           (make-product (multiplier exp)
+                         (deriv-2 (multiplicand exp) var))
+           (make-product (deriv-2 (multiplier exp) var)
+                         (multiplicand exp))))
+        ((exponentiation? exp)
+         (make-product (exponent exp)
+                       (make-product (make-exponentiation (base exp) (- (exponent exp) 1))
+                                     (deriv-2 (base exp) var))))
+        (else
+         (error "unknown expression type -- DERIV" exp))))
+
+(define (exponentiation? x)
+  (and (pair? x) (eq? (car x) '**)))
+(define (base x) (cadr x))
+(define (exponent x) (caddr x))
+(define (make-exponentiation e1 e2)
+  (cond ((=number? e2 0) 1)
+        ((=number? e2 1) e1)
+        ((=number? e1 0) 0)
+        ((=number? e1 1) 1)
+        ((and (number? e1) (number? e2) (expt e1 e2)))
+        (else (list '** e1 e2))))
+
+
+;; ex 2.57
+(define (make-sum-2 a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2)) (+ a1 a2))
+        (else (make-sum-list (list a1 a2)))))
+
+(define (make-sum-list L)
+  (if (= (length L) 2) (list '+ (car L) (cadr L))
+      (make-sum-2 (car L) (make-sum-list (cdr L)))))
+
+(define (augend-2 s)
+  (let ((a (cddr s)))
+    (if (= (length a) 1)
+        (car a)
+        (make-sum-list a))))
+
+
 ;; ex 2.58
 ;; .a
 (define (deriv-i exp var)
@@ -92,3 +144,6 @@
 ;> (deriv-i '(x + 3) 'x)
 ;> (deriv-i '(x * y) 'x)
 ;> (deriv-i '((x * y) * (x + 3)) 'x)
+;> (deriv-i '(x + (3 * (x + (y + 2)))) 'x)
+
+;; .b : 가능은 하다. (꼬리점 인자를 적극 활용) 하지만 엄청난 분량의 코드가 기다릴 것이다.
