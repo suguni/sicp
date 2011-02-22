@@ -96,3 +96,54 @@
   '(1 0 0 0 1 0 1 0 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 0 1 0 0 1 0 0 0 0 0 1 1 1 0 0 1 1 1 1))
 (decode encoded-data sample-huff-tree)
 (decode-my encoded-data sample-huff-tree)
+
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((< (weight x) (weight (car set))) (cons x set))
+        (else (cons (car set) (adjoin-set x (cdr set))))))
+
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+      '()
+      (let ((pair (car pairs)))
+        (adjoin-set (make-leaf (car pair)
+                               (cadr pair))
+                    (make-leaf-set (cdr pairs))))))
+
+;; ex 2.67
+(define sample-tree
+  (make-code-tree (make-leaf 'A 4)
+                  (make-code-tree
+                   (make-leaf 'B 2)
+                   (make-code-tree (make-leaf 'D 1)
+                                   (make-leaf 'C 1)))))
+(define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+(decode sample-message sample-tree) ;; => '(A D A B B C A)
+
+;; ex 2.68
+(define (encode message tree)
+  (if (null? message)
+      '()
+      (append (encode-symbol (car message) tree)
+              (encode (cdr message) tree))))
+
+;;encode-symbol 프로시저 짜기.
+;; - 한 글자를 인코딩하여 비트 리스트를 내놓는 프로시저
+;; - tree에 없는 글자가 들어오면 오류 보여주기
+(define (encode-symbol sym tree)
+  (if (or (null? tree) (leaf? tree))
+      '()
+      (let ((left (left-branch tree))
+            (right (right-branch tree)))
+        (cond ((in? (symbols left) sym)
+               (cons 0 (encode-symbol sym left)))
+              ((in? (symbols right) sym)
+               (cons 1 (encode-symbol sym right)))
+              (else (error "NOT FOUND"))))))
+
+(define (in? list item)
+  (cond ((null? list) #f)
+        ((eq? (car list) item) #t)
+        (else (in? (cdr list) item))))
+
+;; (encode-symbol 'D sample-tree) ;; => '(1 1 0)
