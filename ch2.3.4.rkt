@@ -110,6 +110,12 @@
                                (cadr pair))
                     (make-leaf-set (cdr pairs))))))
 
+(display "make-leaf-set")
+(newline)
+(make-leaf-set '((A 4) (B 2) (C 1) (D 1)))
+(display "======")
+(newline)
+
 ;; ex 2.67
 (define sample-tree
   (make-code-tree (make-leaf 'A 4)
@@ -118,7 +124,11 @@
                    (make-code-tree (make-leaf 'D 1)
                                    (make-leaf 'C 1)))))
 (define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
-(decode sample-message sample-tree) ;; => '(A D A B B C A)
+(display "decode")
+(newline)
+;; (decode sample-message sample-tree) ;; => '(A D A B B C A)
+(display "======")
+(newline)
 
 ;; ex 2.68
 (define (encode message tree)
@@ -139,11 +149,49 @@
                (cons 0 (encode-symbol sym left)))
               ((in? (symbols right) sym)
                (cons 1 (encode-symbol sym right)))
-              (else (error "NOT FOUND"))))))
+              (else (error "NOT FOUND" sym))))))
 
 (define (in? list item)
   (cond ((null? list) #f)
         ((eq? (car list) item) #t)
         (else (in? (cdr list) item))))
-
 ;; (encode-symbol 'D sample-tree) ;; => '(1 1 0)
+
+;; ex 2.69
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+
+;; 가벼운거 2개 골라서 묶기, leaf-set은 차례 매긴 집합이다.
+;; 차례 매겨진 상태이므로 제일 앞에거 2개만 가져와서 tree를 만들고 이걸 다시 adjoin-set 한다.
+(define (successive-merge leaf-set)
+  (define (iter leaf-set)
+    (if (null? (cdr leaf-set))
+        (car leaf-set)
+        (let ((s1 (car leaf-set))
+              (r1 (cdr leaf-set)))
+          (let ((s2 (car r1))
+                (r2 (cdr r1)))
+            (iter (adjoin-set (make-code-tree s1 s2) r2))))))
+  (iter leaf-set))
+
+;; 입력
+;; '((A 4) (B 2) (C 1) (D 1)))
+;; 결과
+;; (make-code-tree (make-leaf 'A 4)
+;;                 (make-code-tree
+;;                    (make-leaf 'B 2)
+;;                    (make-code-tree (make-leaf 'D 1)
+;;                                    (make-leaf 'C 1)))))
+(generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))
+
+;; ex 2.70
+(define rock-huff-tree (generate-huffman-tree '((A 2) (NA 16) (BOOM 1) (SHA 3) (GET 2) (YIP 9) (JOB 2) (WAH 1))))
+(define rock-message (append '(GET A JOB)
+                             '(SHA NA NA NA NA NA NA NA NA)
+                             '(GET A JOB)
+                             '(SHA NA NA NA NA NA NA NA NA)
+                             '(WAH YIP YIP YIP YIP YIP YIP YIP YIP YIP)
+                             '(SHA BOOM)))
+(length (encode rock-message rock-huff-tree))
+;; 인코딩 필요 bit수 : 84
+;; 8개의 낱말이면 하나의 낱말을 표현하는데 3개 bit 필요하므로 위의 message를 encoding 하면 3 * 36 = 108
