@@ -195,3 +195,21 @@
 (length (encode rock-message rock-huff-tree))
 ;; 인코딩 필요 bit수 : 84
 ;; 8개의 낱말이면 하나의 낱말을 표현하는데 3개 bit 필요하므로 위의 message를 encoding 하면 3 * 36 = 108
+
+;; ex 2.71
+;;n = 5
+;;'(((((leaf E 1) (leaf D 2) (E D) 3)
+;;    (leaf C 4) (E D C) 7)
+;;   (leaf B 8) (E D C B) 15)
+;;  (leaf A 16) (E D C B A) 31)
+;;가장 빈도수가 많은 : 1 bit
+;;가장 빈도수가 적은 : n-1 bit
+
+;; ex 2.72
+;;+ 1글자 기준 encode 횟수
+;; - 가장 많이 쓰는 글자 : 1
+;; - 가장 적게 쓰는 글자 : n
+;;+ n글자 기준 encode 횟수
+;; - 가장 많이 쓰는 글자 : n
+;; - 가장 적게 쓰는 글자 : n^2
+;;(글자 n개의 빈도가 ex2.71의 상황이기 때문)
