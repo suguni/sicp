@@ -276,3 +276,49 @@
             record))))
 
 ;; d. 새로운 부서를 처리할 패키지를 만들어야 한다.
+
+;; 메시지 패싱 기법
+(define (make-from-real-imag x y)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) x)
+          ((eq? op 'imag-part) y)
+          ((eq? op 'magnitude)
+           (sqrt (+ (square x) (square y))))
+          ((eq? op 'angle)
+           (atan y x))
+          (else
+           (error "Unknown op -- MAKE-FROM-REAL-IMAG" op))))
+  dispatch)
+(define (apply-generic op arg)
+  (arg op))
+
+;; ex 2.75
+(define (make-from-mag-ang m a)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part)
+           (* m (cos a)))
+          ((eq? op 'imag-part)
+           (* m (sin a)))
+          ((eq? op 'magnitude) m)
+          ((eq? op 'angle) a)
+          (else
+           (error "Unknown op -- MAKE-FROM-REAL-IMAG" op))))
+  dispatch)
+(define c1 (make-from-mag-ang 10 (/ 3.141592 2)))
+
+;; ex 2.76
+;; * 방법
+;;    1. dispatch on type
+;;    2. data directed
+;;    3. message passing
+;; * 새로운 데이터 타입이 늘어나는 경우 
+;;    1 방식에서는 모든 연산 프로시저들에서 새로운 데이터 타입을 처리할 수 있는 조건절을 추가해야 한다. 기존 코드를 많이 수정해야 한다.
+;;    상대적으로 2의 경우 기존 코드에 변경 없이 새로운 프로시저를 정의해서 사용하면 되므로 프로그램이 잘못될 가능성과 범위가 줄어든다.
+;; * 새로운 연산이 늘어나는 경우
+;;    3 방식에서는 새로운 데이터 타입이 늘어날때 1 방식의 문제와 동일한 문제가 발생한다.
+;;    즉, 각 연산을 기존 데이터 물체에 해당하는 프로시저에 추가해야 한다.
+;;    상대적으로 1 방식은 기존 코드에 영향을 주는 부분이 많지 않다.
+;; * data directed 방식은?
+;;    새로운 데이터 타입이 늘어나거나 새로운 연산이 늘어나게 되면 수정이 필요하지만, 대신 기존 인터페이스와 구현은 수정할 부분이 없으므로
+;;    3가지 방법 중에서 가장 코드의 변경으로 문제가 생길 가능성이 적다고 볼 수 있다.
+
