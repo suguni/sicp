@@ -102,7 +102,8 @@
            (cond ((equal? x1 x2) (adjoin-set-ol x1 (union-set-ol sub-set1 sub-set2)))
                  ((> x1 x2)      (adjoin-set-ol x2 (union-set-ol set1 sub-set2)))
                  ((< x1 x2)      (adjoin-set-ol x1 (union-set-ol sub-set1 set2))))))))
-;; 이게 OMEGA(n)인가?
+;; 이게 OMEGA(n)인가? OK
+;; adjoin-set-ol 필요 없음. cons로 엮어도 됨.
 
 ;; 두 갈래 나무로 표현한 집합
 
