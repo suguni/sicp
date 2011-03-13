@@ -1,6 +1,47 @@
-#lang racket
+;; SICP support code
+(define (assoc key records)
+  (cond ((null? records) #f)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  #f))
+            #f)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)    
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+
 
 ;; 데이터 중심 프로그래밍 : 2.4.2에서 cond로 tag를 확인해서 처리했는데 이 과정을 일반화된 연산을 이용하는 방식
+
+(define (square x) (* x x))
 
 ;; contents에 tag 붙이기
 (define (attach-tag type-tag contents)
@@ -72,10 +113,96 @@
           (error "No method for these types -- APPLY-GENERIC" (list op type-tags))))))
 
 ;; 이런식으로 사용.
-(define (real-part x) (apply-generic 'real-part z))
+(define (real-part z) (apply-generic 'real-part z))
 
 ;; 2.4.2에서는 새로운 type이 추가될때마다 real-part, imag-part 등의 selector를 변경해야 했다.
 ;; 또 다른 타입에 대한 프로그램이 추가될때마다 이름이 겹치지 않는지 확인해서 수정이 필요했다.
 ;; 위와 같이 짜면 새로운 타입에 대한 프로그램을 짜는 사람만 고민하면 된다.
 
 ;; 근데 put와 get이 어떻게 동작하는지 잘 모르겠음. put의 type 인자가 리스트인데... 왜???
+
+
+;; ex 2.73
+(define (=number? exp num)
+  (and (number? exp) (= exp num)))
+      
+(define (variable? e)
+  (symbol? e))
+
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+(define (operator exp) (car exp))
+(define (operands exp) (cdr exp))
+
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp) (if (same-variable? exp var) 1 0))
+        (else ((get (operator exp) 'deriv) (operands exp) var))))
+;;        (else ((get 'deriv (operator exp)) (operands exp) var))))
+
+;; (+ x 2)
+;; operator > +
+;; operands > (x 2)
+
+;; a. 위에서 한일은? 
+;; number인 경우와 variable인 경우는 동일하게 처리하고, 나머지(식)인 경우는 식의 연산자에 대한 deriv 프로시저를 가져와 미분을 실행한다.
+;; number와 variable의 경우는 내부 방식에 상관없이 동일하게 처리되므로 데이터 중심 방식으로 다룰 필요가 없다.
+
+;; b. +, * 식을 미분하는 프로시저 짜기
+(define (install-deriv-package)
+  (define (make-sum a b)
+    (cond ((=number? a 0) b)
+          ((=number? b 0) a)
+          ((and (number? a) (number? b)) (+ a b))
+          (else (list '+ a b))))
+  (define (augend e) (car e))               ;; a + b 에서 a
+  (define (addend e) (cadr e))              ;; a + b 에서 b
+
+  (define (deriv-sum exp var)
+    (make-sum (deriv (augend exp) var)
+              (deriv (addend exp) var)))
+  
+  (define (make-product a b)
+    (cond ((or (=number? a 0) (=number? b 0)) 0)
+          ((=number? a 1) b)
+          ((=number? b 1) a)
+          ((and (number? a) (number? b)) (* a b))
+          (else (list '* a b))))
+  (define (multiplicand e) (car e))         ;; a * b 에서 a
+  (define (multiplier e) (cadr e))          ;; a * b 에서 b
+
+  (define (deriv-product exp var)
+    (make-sum (make-product (multiplicand exp) (deriv (multiplier exp) var))
+              (make-product (multiplier exp) (deriv (multiplicand exp) var))))
+
+  ;; c. exponentiation 식 추가
+  (define (make-exponentiation a b)
+    (cond ((=number? b 0) 1)
+          ((=number? a 0) 0)
+          ((=number? b 1) a)
+          ((=number? a 1) 1)
+          ((and (number? a) (number? b)) (expt a b))
+          (else (list '^ a b))))
+  (define (base exp) (car exp))
+  (define (exponent exp) (cadr exp))
+  
+  (define (deriv-exponentiation exp var)
+    (let ((u (base exp))
+          (n (exponent exp)))
+      (make-product (make-product n (make-exponentiation u (make-sum n -1)))
+                    (deriv u var))))
+
+  ;; interface
+;  (put 'deriv '+ deriv-sum)
+;  (put 'deriv '* deriv-product)
+;  (put 'deriv '^ deriv-exponentiation)
+  (put '+ 'deriv deriv-sum)
+  (put '* 'deriv deriv-product)
+  (put '^ 'deriv deriv-exponentiation)
+  'done)
+
+;; d. op / type 이 아닌 type / op 로 인덱싱 되어 있다면?
+;; deriv 프로시저의 마지막 절이 ((get (operator exp) 'deriv) (operands exp) var) 가 된다.
+;; put 프로시저에서 op와 type을 반대로 입력하면 된다.
+
