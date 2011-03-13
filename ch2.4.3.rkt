@@ -206,3 +206,73 @@
 ;; deriv 프로시저의 마지막 절이 ((get (operator exp) 'deriv) (operands exp) var) 가 된다.
 ;; put 프로시저에서 op와 type을 반대로 입력하면 된다.
 
+
+;; ex 2.74
+
+;; A 부서
+(define (install-dep-A-package)
+  
+  (define (get-record employee file) '())
+  (define (get-salary record) '())
+  
+  (define (make-file records) '())
+  (define (add-record record) '())
+  
+  (define (tag x) (attach-tag 'depA x))
+
+  ;; interface
+  (put 'get-record 'depA get-record)
+  (put 'get-salary 'depA get-salary)
+
+  ;; A 부서 file 만들기
+  (put 'make-file 'depA (lambda (records) (tag (make-file records))))
+  
+  ;; file에 record 추가
+  (put 'add-record 'depA (lambda (record) (tag (add-rcord record))))
+
+  'DONE)
+
+;; B 부서
+(define (install-dep-B-package)
+  
+  (define (get-record employee file) '())
+  (define (get-salary record) '())
+  
+  (define (make-file records) '())
+  (define (add-record record) '())
+  
+  (define (tag x) (attach-tag 'depB x))
+
+  ;; interface
+  (put 'get-record 'depB get-record)
+  (put 'get-salary 'depB get-salary)
+
+  ;; B 부서 file 만들기
+  (put 'make-file 'depB (lambda (records) (tag (make-file records))))
+  
+  ;; file에 record 추가
+  (put 'add-record 'depB (lambda (record) (tag (add-rcord record))))
+
+  'DONE)
+
+;; a. get-record 프로시저 짜기
+;; 파일이 어떤 부서에 속하는지 알 수 있어야 하고, 이 정보는 파일의 태그로 저장된다.
+;; 파일의 자료 구조 : '(부서명 레코드)
+(define (get-record employee file)
+  ((get 'get-record (type-tag file)) employee (contents file)))
+
+;; b. get-salary 프로시저 짜기
+;; 주어진 레코드가 어떤 부서에 속하는 것인지 알 수 있어야 한다. 파일과 마찬가지로 태그로 저장하면 된다.
+(define (get-salary record)
+  ((get 'get-salary (type-tag record)) (contents record)))
+
+;; c. find-employee-record 프로시저 짜기
+(define (find-employee-reocrd employee file-list)
+  (if (null? file-list)
+      '()
+      (let ((record (get-record employee (car file-list))))
+        (if (null? record)
+            (find-employee-record employee (cdr file-list))
+            record))))
+
+;; d. 새로운 부서를 처리할 패키지를 만들어야 한다.
