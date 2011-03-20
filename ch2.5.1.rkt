@@ -67,6 +67,8 @@
 (define (mul x y) (apply-generic 'mul x y))
 (define (div x y) (apply-generic 'div x y))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; scheme number package
 (define (install-scheme-number-package)
   (define (tag x)
@@ -275,3 +277,38 @@
 ;; 3. (apply-generic 'magnitude (contents z))
 ;; 4. ((get 'magnitude '(rectangular)) (contents (contents z)))
 ;; 5. ((lambda (z) (sqrt (+ (square (car z)) (square (cdr z))))) (contents (contents z)))
+
+;; ex 2.78
+;; 보통수인 경우에는 'scheme-number 태그가 안붙어도 돌아가게 만들기.
+;; ((get 'add 'scheme-number) (make-scheme-number 1) (make-scheme-number 2))라고 사용해도 내부적으로 쌍이 아닌 그냥 숫자로 표현되게.
+
+(define (attach-tag type-tag contents)
+  (if (and (eq? type-tag 'scheme-number)
+           (number? contents))
+      contents
+      (cons type-tag contents)))
+
+(define (type-tag datum)
+  (if (pair? datum)
+      (car datum)
+      (if (number? datum)
+          'scheme-number
+          (write "Bad tagged datum -- TYPE-TAG" datum))))
+
+(define (contents datum)
+  (if (pair? datum)
+      (cdr datum)
+      (if (number? datum)
+          datum
+          (write "Bad tagged datum -- CONTENTS" datum))))
+
+(define ten (make-scheme-number 10))
+(define five (make-scheme-number 5))
+(type-tag ten) ;; scheme-number
+(contents ten) ;; 10
+
+((get 'add '(scheme-number scheme-number)) ten five) ;; 15
+((get 'sub '(scheme-number scheme-number)) ten five) ;; 5
+((get 'mul '(scheme-number scheme-number)) ten five) ;; 45
+((get 'div '(scheme-number scheme-number)) ten five) ;; 2
+
