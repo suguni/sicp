@@ -83,7 +83,17 @@
        (lambda (x y) (tag (/ x y))))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
+
+  ;; equ?
+  (define (equ? x y) (eq? x y))
+  (put 'equ? '(scheme-number scheme-number) equ?)
+  
+  ;; =zero?
+  (put '=zero? '(scheme-number) zero?) ;; ??? (zero? x)
+  
   'done)
+
+
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
 
@@ -94,8 +104,10 @@
   (define (denom x) (cdr x))
   
   (define (make-rat n d)
-    (let ((g (gcd n d)))
-      (cons (/ n g) (/d g))))
+    (if (not (zero? d))
+        (let ((g (gcd n d)))
+          (cons (/ n g) (/ d g)))
+        (cons n d)))
   
   (define (add-rat x y)
     (make-rat (+ (* (numer x) (denom y))
@@ -128,6 +140,17 @@
        (lambda (x y) (tag (div-rat x y))))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
+  
+  ;; equ?
+  (define (equ? x y)
+    (and (eq? (numer x) (numer y))
+         (eq? (denom x) (denom y))))
+  (put 'equ? '(rational rational) equ?)
+  
+  ;; =zero?
+  (put '=zero? '(rational)
+       (lambda (x) (and (zero? (numer x)) (not (zero? (denom x))))))
+  
   'done)
 
 (define (make-rational n d)
@@ -162,6 +185,17 @@
   (put 'make-from-mag-ang 'rectangular
        (lambda (r a) (tag (make-from-mag-ang r a))))
   
+  ;; equ?
+  (define (equ? x y)
+    (and (eq? (real-part x) (real-part y))
+         (eq? (imag-part x) (imag-part y))))
+  (put 'equ? '(rectangular rectangular) equ?)
+  
+  ;; =zero?
+  (put '=zero? '(rectangular)
+       (lambda (z) (and (zero? (real-part z))
+                        (zero? (imag-part z)))))
+  
   'done)
 
 ;; 극좌표 package
@@ -191,7 +225,17 @@
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'polar
        (lambda (r a) (tag (make-from-mag-ang r a))))
+
+  ;; equ?
+  (define (equ? x y)
+    (and (eq? (magnitude x) (magnitude y))
+         (eq? (angle x) (angle y))))
+  (put 'equ? '(polar polar) equ?)
   
+  ;; =zero?
+  (put '=zero? '(polar)
+       (lambda (z) (zero? (magnitude z))))
+
   'done)
 
 (define (real-part z) (apply-generic 'real-part z))
@@ -239,6 +283,14 @@
   (put 'imag-part '(complex) imag-part)
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle)
+
+  ;; equ?
+  (put 'equ? '(complex complex)
+       (lambda (x y) (apply-generic 'equ? x y)))
+
+  ;; =zero?
+  (put '=zero? '(complex)
+       (lambda (z) (apply-generic '=zero? z)))
   
   'done)
 
@@ -307,8 +359,51 @@
 (type-tag ten) ;; scheme-number
 (contents ten) ;; 10
 
-((get 'add '(scheme-number scheme-number)) ten five) ;; 15
-((get 'sub '(scheme-number scheme-number)) ten five) ;; 5
-((get 'mul '(scheme-number scheme-number)) ten five) ;; 45
-((get 'div '(scheme-number scheme-number)) ten five) ;; 2
+(add ten five) ;; 15
+(sub ten five) ;; 5
+(mul ten five) ;; 50
+(div ten five) ;; 2
 
+;; ex 2.79
+(define PI 3.1415926)
+;; equ? 정의하고 산술 연산 꾸러미에 넣기, 개별 프로시저는 각 꾸러미에 들어 있음.
+(define (equ? x y) (apply-generic 'equ? x y))
+
+;; test
+(equ? (make-scheme-number 10) (make-scheme-number 10)) ;; #t
+(equ? (make-scheme-number 10) (make-scheme-number 5))  ;; #f
+(equ? (make-rational 1 5) (make-rational 1 5))         ;; #t
+(equ? (make-rational 1 5) (make-rational 2 5))         ;; #f
+(equ? (make-complex-from-real-imag 3 4)
+      (make-complex-from-real-imag 3 4))               ;; #t
+(equ? (make-complex-from-real-imag 3 4)
+      (make-complex-from-real-imag 3 2))               ;; #f
+(equ? (make-complex-from-mag-ang 1 (/ PI 4))
+      (make-complex-from-mag-ang 1 (/ PI 4)))          ;; #t
+(equ? (make-complex-from-mag-ang 1 (/ PI 4))
+      (make-complex-from-mag-ang 1 (/ PI 2)))          ;; #f
+
+;; ex 2.80
+;; =zero? 프로시저 정의하기. 마찬가지로 개별 프로시저는 각 꾸러미에...
+(define (=zero? x) (apply-generic '=zero? x))
+
+;; test
+(write "=zero? test")
+(newline)
+(=zero? (make-scheme-number 0))            ;; #t
+(=zero? (make-scheme-number 1))            ;; #f
+;; rational은 분자만 0인 경우
+(=zero? (make-rational 0 1))               ;; #t
+(=zero? (make-rational 1 2))               ;; #f
+(=zero? (make-rational 1 0))               ;; #f
+(=zero? (make-rational 0 0))               ;; #f
+;; real-imag 이면 둘 다 0인 경우
+(=zero? (make-complex-from-real-imag 0 0)) ;; #t
+(=zero? (make-complex-from-real-imag 1 1)) ;; #f
+(=zero? (make-complex-from-real-imag 1 0)) ;; #f
+(=zero? (make-complex-from-real-imag 0 1)) ;; #f
+;; mag-ang 인 경우 mag만 0인 경우
+(=zero? (make-complex-from-mag-ang 0 0))   ;; #t
+(=zero? (make-complex-from-mag-ang 0 1))   ;; #t
+(=zero? (make-complex-from-mag-ang 1 1))   ;; #f
+(=zero? (make-complex-from-mag-ang 1 0))   ;; #f
