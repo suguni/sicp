@@ -282,7 +282,7 @@
   ;; 다른 코드(adjoin-term을 이용하는 프로시저들)는 그대로 두고 adjoin-term 프로시저만 변경
   ;; 아래 테스트 코드에서는 sparse term-list로 테스트하고 있어 수정함.
   (define (adjoin-term term term-list)
-    (define (insert-n v n l)
+    (define (insert-n v n l) ;; l=(1 2 3 4) v=2, n=3 => (2 2 2 1 2 3 4)
       (if (= n 0)
           l
           (insert-n v (- n 1) (cons v l))))
@@ -302,8 +302,13 @@
   
   (define (the-empty-termlist) '())
   (define (empty-termlist? term-list) (null? term-list))
-  (define (first-term term-list) (make-term (- (length term-list) 1) (car term-list))) ;; !!!
-  (define (rest-terms term-list) (cdr term-list))
+  (define (first-term term-list)
+    (make-term (- (length term-list) 1) (car term-list))) ;; !!!
+  (define (rest-terms term-list)
+    (cdr term-list))
+
+  
+  ;; (put 'terms 'polynomial (lambda(x) (term-list x)))
   
   (define (make-term order coeff) (list order coeff))
   (define (order term) (car term))
@@ -380,7 +385,8 @@
   
   ;; ex 2.88
   (define (sub-terms l1 l2)
-    (let ((minus-l2 (mul-terms '((0 -1)) l2)))
+    (let ((minus-l2 (mul-terms (adjoin-term (make-term 0 -1)
+                                            (the-empty-termlist)) l2))) ;; ((0 -1))
       (add-terms l1 minus-l2)))
   (define (sub-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
@@ -401,8 +407,8 @@
 ;; polynomial package test code
 
 ;; sparse term list
-;(define p1 (make-polynomial 'x '((2 1) (1 2) (0 1))))  ;; x^2 + 2x + 1
-;(define p2 (make-polynomial 'x '((2 1) (1 -2) (0 1)))) ;; x^2 - 2x + 1
+;; (define p1 (make-polynomial 'x '((2 1) (1 2) (0 1))))  ;; x^2 + 2x + 1
+;; (define p2 (make-polynomial 'x '((2 1) (1 -2) (0 1)))) ;; x^2 - 2x + 1
 
 ;; dense term list 인 경우
 (define p1 (make-polynomial 'x '(1 2 1)))  ;; x^2 + 2x + 1
@@ -415,6 +421,8 @@
 
 ;; ex 2.89 테스트 코드
 (define zero-poly2 (make-polynomial 'x '(0 0 0)))
+;(define zero-poly2 (make-polynomial 'x '((2 0) (0 0))))
+(define zero-poly2 (make-polynomial 'x '(0 0 0))) ;; 0x^2 + 0x + 0
 
 (=zero? zero-poly1)
 (=zero? zero-poly2)
@@ -428,9 +436,12 @@
 ;(sub p1 p2) ;; 4x
 ;(sub p2 p1) ;; -4x
 
+;;(define py (make-polynomial 'y '((2 1) (0 1))))
+(define py (make-polynomial 'y '(1 0 1)))
 
 (define (install-dense-terms-package)
   'done)
 
 (define (install-sparse-terms-package)
   'done)
+
