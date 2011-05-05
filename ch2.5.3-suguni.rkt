@@ -245,6 +245,15 @@
 (define (make-complex-from-mag-ang r a)
   ((get 'make-from-mag-ang 'complex) r a))
 
+(install-scheme-number-package)
+(install-rational-package)
+(install-rectangular-package)
+(install-polar-package)
+(install-complex-package)
+
+
+
+
 ;; polynomial package
 (define (install-polynomial-package)
   
@@ -387,11 +396,6 @@
 (define (make-polynomial var terms)
   ((get 'make 'polynomial) var terms))
 
-(install-scheme-number-package)
-(install-rational-package)
-(install-rectangular-package)
-(install-polar-package)
-(install-complex-package)
 (install-polynomial-package)
 
 ;; polynomial package test code
@@ -408,7 +412,10 @@
 ;; ex 2.87 test code
 (define zero-poly1 (make-polynomial 'x '()))
 ;; (define zero-poly2 (make-polynomial 'x '((2 0) (0 0))))
+
+;; ex 2.89 테스트 코드
 (define zero-poly2 (make-polynomial 'x '(0 0 0)))
+
 (=zero? zero-poly1)
 (=zero? zero-poly2)
 (=zero? p1)
@@ -421,38 +428,9 @@
 ;(sub p1 p2) ;; 4x
 ;(sub p2 p1) ;; -4x
 
-;; ex 2.89
-;; dense term package
-;(define (install-dense-term-package)
-;
-;  (define (adjoin-term term term-list)
-;    (define (insert-n v n l)
-;      (if (= n 0)
-;          l
-;          (insert-n v (- n 1) (cons v l))))
-;    (define (replace-n v n l)
-;      (define (iter input idx output)
-;        (if (null? input)
-;            output
-;            (iter (cdr input) (- idx 1)
-;                  (append output (list (if (= idx n) v (car input)))))))
-;      (iter l (- (length l) 1) '()))
-;    (let ((max-order (- (length term-list) 1))
-;          (o (order term))
-;          (c (coeff term)))
-;      (if (> o max-order)
-;          (cons c (insert-n 0 (- o max-order 1) term-list))
-;          (replace-n c o term-list))))
-;  
-;  (define (the-empty-termlist) '())
-;  (define (first-term term-list) (make-term (- (length term-list) 1) (car term-list))) ;; !!!
-;  (define (rest-terms term-list) (cdr term-list))
-;  (define (empty-termlist? term-list) (null? term-list))
-;  
-;  ;; 이건 그대로 이용
-;  (define (make-term order coeff) (list order coeff))
-;  (define (order term) (car term))
-;  (define (coeff term) (cadr term))
-;  
-;  
-;  'done)
+
+(define (install-dense-terms-package)
+  'done)
+
+(define (install-sparse-terms-package)
+  'done)
