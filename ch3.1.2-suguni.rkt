@@ -65,16 +65,33 @@
     (+ low (random range))))
 ;; 갑자기 random 프로시저 등장.. ㅎㅎ
 
-(define (estimate-integration x1 x2 y1 y2 trials)
-  (define (pred)
+(define (make-experiment x1 x2 y1 y2)
+  (lambda ()
     (let ((radius (/ (- x2 x1) 2.0)))
       (let ((center-x (+ x1 radius))
             (center-y (+ y1 radius))
             (x (random-in-range x1 x2))
             (y (random-in-range y1 y2)))
-        (>= (sqr radius) (+ (sqr (- x center-x)) (sqr (- y center-y)))))))
+        (>= (sqr radius) (+ (sqr (- x center-x)) (sqr (- y center-y))))))))
+
+(define (estimate-integration p x1 x2 y1 y2 trials)
   (let ((area (* 1.0 (- x2 x1) (- y2 y1))))
-    (* (monte-carlo trials pred) area)))
+    (* (monte-carlo trials p) area)))
+  
+;; (define experiment (make-experiment 0 10 0 10))
+;; (estimate-integration experiment 0 10 0 10 1000)
+  
+;  
+;(define (estimate-integration x1 x2 y1 y2 trials)
+;  (define (pred)
+;    (let ((radius (/ (- x2 x1) 2.0)))
+;      (let ((center-x (+ x1 radius))
+;            (center-y (+ y1 radius))
+;            (x (random-in-range x1 x2))
+;            (y (random-in-range y1 y2)))
+;        (>= (sqr radius) (+ (sqr (- x center-x)) (sqr (- y center-y)))))))
+;  (let ((area (* 1.0 (- x2 x1) (- y2 y1))))
+;    (* (monte-carlo trials pred) area)))
 ;; (estimate-integration 0 10 0 10 99)
 ;; 책에서는 estimate-integration 프로시저가 p, x1, x2, y1, y2, trials 를 받는다고 했는데..
 ;; 위에서는 p(predicate)를 내부에서 정의했음.
@@ -87,5 +104,5 @@
     (lambda (m)
       (cond ((eq? m 'generate) (begin (set! x (rand-update x)) x))
             ((eq? m 'reset) (lambda (init)
-                              (set! x (rand-update init))
+                              (set! x init) ;;(rand-update init))
                               x))))))

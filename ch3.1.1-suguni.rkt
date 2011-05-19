@@ -6,11 +6,12 @@
 ;; p288
 (define balance 100)
 (define (withdraw amount)
+  (begin
   (if (>= balance amount)
       (begin
         (set! balance (- balance amount)) ;; set!은 명령이다.
         balance)
-      "Insufficient funds"))
+      "Insufficient funds")))
 
 ;; [???]
 ;; set! 으로 하지말고 define 하면 어떻게 되는가?
@@ -139,12 +140,47 @@
 
 (define acc1 (make-account-pwd 100 'secret-password))
 
+
+(define (make-account-pwd-1 balance pwd)
+  
+  (lambda (in-pwd m)
+    
+    (define (withdraw amount)
+      (if (eq? pwd in-pwd)
+          (if (>= balance amount)
+              (begin
+                (set! balance (- balance amount))
+                balance)
+              "Insufficient funds")
+          "Incorrect Password"))
+    
+    (define (deposit amount)
+      (if (eq? pwd in-pwd)
+          (begin
+            (set! balance (+ balance amount))
+            balance)
+          "Incorrect Password"))
+        
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT" m))))
+        ;; "Incorrect password"를 답하는게 아님. 
+        ;;(error "Incorrect password" in-pwd)))
+        
+        ;; 무조건 "Incorrect password"를 답하는 프로시저를 반환함
+        ;;(lambda (v) "Incorrect password")))
+  )
+  
+
+
+
 ;; ex 3.4 - 암호 + 경찰불러 make-account
 (define (make-account-pwd-cops balance pwd)
   
   (define (call-the-cops) "POLICE")
     
   (let ((incorrect-count 0))
+    
     (define (withdraw amount)
       (if (>= balance amount)
           (begin
@@ -171,6 +207,7 @@
               ;; count가 7초과면 call-the-cops 호출
               (if (> incorrect-count 7)
                   (call-the-cops)
+                  ;; "Incorrect password")))))
                   (list "Incorrect password" incorrect-count))))))
     
     dispatch))

@@ -1,4 +1,4 @@
-(define (square x) (* x x))
+(define (square x) (mul x x))
 
 ;; SICP support code
 (define (assoc key records)
@@ -41,12 +41,13 @@
 (define put (operation-table 'insert-proc!))
 
 ;; generic operator
+;; (apply-generic 'add (make-scheme-number 2) (make-scheme-number 2))
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
-          (write "No method for these types -- APPLY-GENERIC" (list op type-tags))))))
+          (write "No method for these types -- APPLY-GENERIC"))))) ;; (list op type-tags))))))
 
 (define (attach-tag type-tag contents)
   (cons type-tag contents))
@@ -54,12 +55,12 @@
 (define (type-tag datum)
   (if (pair? datum)
       (car datum)
-      (write "Bad tagged datum -- TYPE-TAG" datum)))
+      (write "Bad tagged datum -- TYPE-TAG")));; datum)))
 
 (define (contents datum)
   (if (pair? datum)
       (cdr datum)
-      (write "Bad tagged datum -- CONTENTS" datum)))
+      (write "Bad tagged datum -- CONTENTS")));; datum)))
 
 ;; generic arithmetic operators
 (define (add x y) (apply-generic 'add x y))
@@ -162,8 +163,8 @@
   (define (real-part z) (car z))
   (define (imag-part z) (cdr z))
   (define (magnitude z)
-    (sqrt (+ (square (real-part z))
-             (square (imag-part z)))))
+    (sqrt (add (square (real-part z))
+               (square (imag-part z)))))
   (define (angle z)
     (atan (imag-part z) (real-part z)))
   
@@ -252,17 +253,17 @@
     ((get 'make-from-mag-ang 'polar) r a))
   
   (define (add-complex z1 z2)
-    (make-from-real-imag (+ (real-part z1) (real-part z2))
-                         (+ (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (add (real-part z1) (real-part z2))
+                         (add (imag-part z1) (imag-part z2))))
   (define (sub-complex z1 z2)
-    (make-from-real-imag (- (real-part z1) (real-part z2))
-                         (- (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (sub (real-part z1) (real-part z2))
+                         (sub (imag-part z1) (imag-part z2))))
   (define (mul-complex z1 z2)
-    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
-                       (* (angle z1) (angle z2))))
+    (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                       (mul (angle z1) (angle z2))))
   (define (div-complex z1 z2)
-    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
-                       (/ (angle z1) (angle z2))))
+    (make-from-mag-ang (div (magnitude z1) (magnitude z2))
+                       (div (angle z1) (angle z2))))
   
   (define (tag x) (attach-tag 'complex x))
   (put 'add '(complex complex)
@@ -345,14 +346,14 @@
       (car datum)
       (if (number? datum)
           'scheme-number
-          (write "Bad tagged datum -- TYPE-TAG" datum))))
+          (write "Bad tagged datum -- TYPE-TAG"))));; datum))))
 
 (define (contents datum)
   (if (pair? datum)
       (cdr datum)
       (if (number? datum)
           datum
-          (write "Bad tagged datum -- CONTENTS" datum))))
+          (write "Bad tagged datum -- CONTENTS"))));; datum))))
 
 (define ten (make-scheme-number 10))
 (define five (make-scheme-number 5))
