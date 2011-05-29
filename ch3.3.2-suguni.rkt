@@ -65,6 +65,82 @@
          (set-front-ptr! queue (cdr (front-ptr queue)))
          queue)))
 
-;; ex 3.22
+;; ex 3.21
+;; queue는 front-ptr과 rear-ptr의 cons 쌍이므로,
+;; 논리적인 큐의 형태만 출력하려면 car만 출력하면 된다.
+;; 여기서는 그냥 car를 반환하게 해서 repl이 알아서 출력하게 함.
 (define (print-queue queue)
   (write (car queue)))
+
+;; ex 3.22
+(define (make-queue-new)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    
+    (define (set-front-ptr! item) (set! front-ptr item))
+    (define (set-rear-ptr! item) (set! rear-ptr item))
+
+    (define (empty-queue?) (null? front-ptr))
+
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT called with an empty queue") ;; error
+          (car front-ptr)))
+
+    (define (insert-queue! item)
+      (let ((new-pair (cons item '())))
+        (cond ((empty-queue?)
+               (set-front-ptr! new-pair)
+               (set-rear-ptr! new-pair))
+              (else
+               (set-cdr! rear-ptr new-pair)
+               (set-rear-ptr! new-pair)))))
+
+    (define (delete-queue!)
+      (cond ((empty-queue?)
+             (error "DELETE! called with an empty queue"))
+            (else
+             (set-front-ptr! (cdr front-ptr)))))
+    
+    (define (print-queue)
+      front-ptr)
+    
+    (define (dispatch m)
+      (cond ((eq? m 'insert!) insert-queue!)
+            ((eq? m 'delete!) delete-queue!)
+            ((eq? m 'front) front-queue)
+            ((eq? m 'empty?) empty-queue?)
+            ((eq? m 'print) print-queue)
+            (else
+             (error "Invalid Message"))))
+    
+    dispatch))
+
+(define (insert-queue! queue item)
+  ((queue 'insert!) item))
+(define (delete-queue! queue)
+  ((queue 'delete!)))
+(define (empty-queue? queue)
+  ((queue 'empty?)))
+(define (front-queue queue)
+  ((queue 'front)))
+(define (print-queue queue)
+  ((queue 'print)))
+
+(define nq (make-queue-new))
+(insert-queue! nq 'a) ;; (a)
+(print-queue nq)
+(insert-queue! nq 'b) ;; (a b)
+(print-queue nq)
+(insert-queue! nq 'c) ;; (a b c)
+(print-queue nq)
+(insert-queue! nq 'd) ;; (a b c d)
+(print-queue nq)
+(empty-queue? nq)     ;; false
+(front-queue nq)      ;; a
+(delete-queue! nq)    ;; (b c d)
+(delete-queue! nq)    ;; (c d)
+(front-queue nq)      ;; c
+(print-queue nq)
+
+;; ex 3.23
