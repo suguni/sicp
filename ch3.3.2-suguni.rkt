@@ -143,4 +143,99 @@
 (front-queue nq)      ;; c
 (print-queue nq)
 
-;; ex 3.23
+;; ex 3.23 double-ended queue 만들기
+;; 모든 연산이 O(1) 이어야 한다.
+;; > 이것때문에 위의 queue 구조로 풀 수 없다.
+;; > rear-delete-deque를 O(1)로 만들수 없기 때문.
+;; > 데이터와 이전 pair를 쌍으로 하여 데이터 구조를 만든다.
+(define (make-deque)
+  (cons '() '()))
+
+(define (empty-deque? deque)
+  (or (null? (front-deque-ptr deque))
+      (null? (rear-deque-ptr deque))))
+
+(define (front-deque deque)
+  (if (empty-deque? deque)
+      (error "FRONT called with an empty deque" deque) ;; error
+      (car (car (front-deque-ptr deque)))))
+
+(define (rear-deque deque)
+  (if (empty-deque? deque)
+      (error "FRONT called with an empty deque" deque) ;; error
+      (car (car (rear-deque-ptr deque)))))
+
+(define (front-insert-deque! deque item)
+  (let ((new-pair (cons (cons item '()) '())))
+    (cond ((empty-deque? deque)
+           (set-front-deque-ptr! deque new-pair)
+           (set-rear-deque-ptr! deque new-pair))
+          (else
+           (set-cdr! new-pair (front-deque-ptr deque))
+           (set-cdr! (car (front-deque-ptr deque)) new-pair)
+           (set-front-deque-ptr! deque new-pair)))))
+
+(define (rear-insert-deque! deque item)
+  (let ((new-pair (cons (cons item '()) '())))
+    (cond ((empty-deque? deque)
+           (set-front-deque-ptr! deque new-pair)
+           (set-rear-deque-ptr! deque new-pair))
+          (else
+           (set-cdr! (car new-pair) (rear-deque-ptr deque))
+           (set-cdr! (rear-deque-ptr deque) new-pair)
+           (set-rear-deque-ptr! deque new-pair)))))
+
+(define (front-delete-deque! deque)
+  (cond ((empty-deque? deque) ;; 빈 경우
+         (error "DELETE! called with an empty deque" deque))
+        ((null? (cdr (front-deque-ptr deque))) ;; 1개 남은 경우
+         (set-front-deque-ptr! deque '())
+         (set-rear-deque-ptr! deque '()))
+        (else
+         (set-cdr! (car (cdr (front-deque-ptr deque))) '())
+         (set-front-deque-ptr! deque (cdr (front-deque-ptr deque))))))
+  
+(define (rear-delete-deque! deque)
+  (cond ((empty-deque? deque) ;; 빈 경우
+         (error "DELETE! called with an empty deque" deque))
+        ((null? (cdr (front-deque-ptr deque))) ;; 1개 남은 경우
+         (set-front-deque-ptr! deque '())
+         (set-rear-deque-ptr! deque '()))
+        (else
+         (set-rear-deque-ptr! deque (cdr (car (rear-deque-ptr deque))))
+         (set-cdr! (rear-deque-ptr deque) '()))))
+
+(define (front-deque-ptr deque) (car deque))
+(define (rear-deque-ptr deque) (cdr deque))
+(define (set-front-deque-ptr! deque item) (set-car! deque item))
+(define (set-rear-deque-ptr! deque item) (set-cdr! deque item))
+
+(define (print-deque deque)
+  (define (iter curr)
+    (if (eq? (rear-deque-ptr deque) curr)
+        (begin
+          (write (car (car curr))))
+        (begin
+          (write (car (car curr)))
+          (iter (cdr curr)))))
+  (iter (front-deque-ptr deque)))
+
+;; deque 테스트
+(define de-queue (make-deque))
+(empty-deque? de-queue) ;; #t
+
+(rear-insert-deque! de-queue 'a)
+(print-deque de-queue) ;; a
+(newline)
+(rear-insert-deque! de-queue 'b)
+(print-deque de-queue) ;; ab
+(newline)
+(front-insert-deque! de-queue 'c)
+(print-deque de-queue) ;; cab
+(newline)
+(front-insert-deque! de-queue 'd)
+(print-deque de-queue) ;; dcab
+(newline)
+(front-delete-deque! de-queue)
+(print-deque de-queue) ;; cab
+(newline)
