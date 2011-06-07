@@ -116,32 +116,32 @@
     
     dispatch))
 
-(define (insert-queue! queue item)
+(define (insert-queue-new! queue item)
   ((queue 'insert!) item))
-(define (delete-queue! queue)
+(define (delete-queue-new! queue)
   ((queue 'delete!)))
-(define (empty-queue? queue)
+(define (empty-queue-new? queue)
   ((queue 'empty?)))
-(define (front-queue queue)
+(define (front-queue-new queue)
   ((queue 'front)))
-(define (print-queue queue)
+(define (print-queue-new queue)
   ((queue 'print)))
 
 (define nq (make-queue-new))
-(insert-queue! nq 'a) ;; (a)
-(print-queue nq)
-(insert-queue! nq 'b) ;; (a b)
-(print-queue nq)
-(insert-queue! nq 'c) ;; (a b c)
-(print-queue nq)
-(insert-queue! nq 'd) ;; (a b c d)
-(print-queue nq)
-(empty-queue? nq)     ;; false
-(front-queue nq)      ;; a
-(delete-queue! nq)    ;; (b c d)
-(delete-queue! nq)    ;; (c d)
-(front-queue nq)      ;; c
-(print-queue nq)
+(insert-queue-new! nq 'a) ;; (a)
+(print-queue-new nq)
+(insert-queue-new! nq 'b) ;; (a b)
+(print-queue-new nq)
+(insert-queue-new! nq 'c) ;; (a b c)
+(print-queue-new nq)
+(insert-queue-new! nq 'd) ;; (a b c d)
+(print-queue-new nq)
+(empty-queue-new? nq)     ;; false
+(front-queue-new nq)      ;; a
+(delete-queue-new! nq)    ;; (b c d)
+(delete-queue-new! nq)    ;; (c d)
+(front-queue-new nq)      ;; c
+(print-queue-new nq)
 
 ;; ex 3.23 double-ended queue 만들기
 ;; 모든 연산이 O(1) 이어야 한다.
