@@ -1,17 +1,17 @@
 ;; 3.3.4 A simulator for digital circuits
 
-(define a (make-wire))
-(define b (make-wire))
-(define c (make-wire))
-
-(define d (make-wire))
-(define e (make-wire))
-(define s (make-wire))
-
-(or-gate a b d)
-(and-gate a b c)
-(inverter c e)
-(and-gate d e s)
+;(define a (make-wire))
+;(define b (make-wire))
+;(define c (make-wire))
+;
+;(define d (make-wire))
+;(define e (make-wire))
+;(define s (make-wire))
+;
+;(or-gate a b d)
+;(and-gate a b c)
+;(inverter c e)
+;(and-gate d e s)
 
 (define (half-adder a b s c)
   (let ((d (make-wire))
@@ -30,18 +30,6 @@
     (half-adder a s sum c2)
     (or-gate c1 c2 c-out)
     'ok))
-
-;; [TODO]
-(define (get-signal wire)
-  '())
-
-;; [TODO]
-(define (set-signal! wire value)
-  '())
-
-;; [TODO]
-(define (add-action! wire proc)
-  '())
 
 ;;; full-adder 사용은? 아래와 같이 하면 될까?
 ;(define in1 (make-wire))
@@ -83,10 +71,6 @@
         ((= s 1) 0)
         (else (error "Invalid signal" s))))
 
-;; [TODO]
-(define (after-delay delay proc)
-  '())
-
 (define (and-gate a1 a2 output)
   (define (and-action-procedure)
     (let ((new-value (logical-and (get-signal a1) (get-signal a2))))
@@ -123,34 +107,179 @@
 (define (or-gate2 a1 a2 output)
   (let ((i1 (make-wire))
         (i2 (make-wire))
-        (a1 (make-wire)))
+        (e1 (make-wire)))
     (inverter a1 i1)
     (inverter a2 i2)
-    (and-gate i1 i2 a1)
-    (inverter a1 output)))
+    (and-gate i1 i2 e1)
+    (inverter e1 output)))
 ;; delay = (+ (* 3 inverter-delay) and-gate-delay)
+;; 아니다.
+;;
+;; a1 또는 a2가 변경될때 하나의 인버터로부터 output 까지의 signal만 변경되므로
+;; delay = (+ (* 2 inverter-delay) and-gate-delay)
+;; 가 된다.
 
 ;; ex 3.30
-(define (ripple-carry-adder a-wires b-wires s-wires c)
-  
-  (define (make-wires count)
-    (define (iter wires n)
-      (if (= 0 n)
-          wires
-          (iter (cons (make-wire) wires) (- n 1))))
-    (iter '() count))
-
-  (define (iter a b c-in s c-out)
-    (if (null? a)
-        'ok
-        (begin
-          (full-adder (car a) (car b) c-in (car s) (car c-out))
-          (iter (cdr a) (cdr b) (car c-out) (cdr s) (cdr c-out)))))
-  
-  (let ((c-out-wires (make-wires (length a-wires))))
-    (iter a-wires b-wires c s-wires c-out-wires)))
+;(define (ripple-carry-adder a-wires b-wires s-wires c)
+;  
+;  (define (make-wires count)
+;    (define (iter wires n)
+;      (if (= 0 n)
+;          wires
+;          (iter (cons (make-wire) wires) (- n 1))))
+;    (iter '() count))
+;
+;  (define (iter a b c-in s c-out)
+;    (if (null? a)
+;        'ok
+;        (begin
+;          (full-adder (car a) (car b) c-in (car s) (car c-out))
+;          (iter (cdr a) (cdr b) (car c-out) (cdr s) (cdr c-out)))))
+;  
+;  (let ((c-out-wires (make-wires (length a-wires))))
+;    (iter a-wires b-wires c s-wires c-out-wires)))
 
 ;; half-adder-delay <= (+ or-delay inverter-delay (* 2 and-delay))
 ;; full-adder-delay <= (+ (* 2 half-adder-delay) or-delay)
 ;; ripple-carry-adder-delay <= (* n full-adder-delay)
 ;;                           = (* n (+ (* 2 (+ or-delay inverter-delay (* 2 and-delay))) or-delay))
+
+(define (ripple-carry-adder a-wires b-wires s-wires c)  
+  (define (iter a b s c-out)
+    (let ((c-in (make-wire)))
+      (if (null? a)
+          'ok
+          (begin
+            (full-adder (car a) (car b) c-out (car s) c-in)
+            (iter (cdr a) (cdr b) c-in (cdr s))))))
+  (iter a-wires b-wires s-wires c))
+
+;; 위 방법은 imperative 한 코드이다. recursive 하게 만들 필요 있다.
+
+;; half-adder-delay <= (+ or-delay inverter-delay (* 2 and-delay))
+;; full-adder-delay <= (+ (* 2 half-adder-delay) or-delay) - b가 변경되었을때
+;;                     (+ half-adder-delay or-delay)       - a가 변경되었을때
+;; ripple-carry-adder-delay <= 최대 : (* n full-adder-delay) = (* n (+ (* 2 half-adder-delay) or-delay))
+;;                             최소 : (* 1 full-adder-delay) = (+ half-adder-delay or-delay)
+
+
+;; p360 줄만들기
+(define (make-wire)
+  (let ((signal-value 0)
+        (action-procedures '()))
+
+    (define (set-my-signal! new-value)
+      (if (not (= signal-value new-value))
+          (begin (set! signal-value new-value)
+                 (call-each action-procedures))
+          'done))
+    
+    (define (accept-action-procedure! proc)
+      (set! action-procedures (cons proc action-procedures))
+      (proc)) ;; 이거 왜 할까? - 최초 호출 시 실행될 필요 있음. - ex 3.31
+    
+    (define (dispatch m)
+      (cond ((eq? m 'get-signal) signal-value)
+            ((eq? m 'set-signal!) set-my-signal!)
+            ((eq? m 'add-action!) accept-action-procedure!)
+            (else (error "Unknown operation -- WIRE" m))))
+    dispatch))
+
+(define (get-signal wire)
+  (wire 'get-signal))
+
+(define (set-signal! wire new-value)
+  ((wire 'set-signal!) new-value))
+
+(define (add-action! wire action-procedure)
+  ((wire 'add-action!) action-procedure))
+
+(define (call-each procedures)
+  (if (null? procedures)
+      'done
+      (begin ((car procedures))
+             (call-each (cdr procedures)))))
+
+;; p363 시간표
+(define (make-agenda)
+  '())
+
+(define (empty-agenda? agenda)
+  '())
+
+(define (first-agenda-item agenda)
+  '())
+
+(define (remove-first-agenda-item agenda)
+  '())
+
+(define (add-to-agenda! time action agenda)
+  'done)
+
+(define (current-time agenda)
+  '())
+
+;; 이상한데... the-agenda 뭥미..
+
+(define (after-delay delay proc)
+  (add-to-agenda! (+ delay (current-time the-agenda))
+                  proc
+                  the-agenda))
+
+;; 어디 쓰지?
+(define (propagate)
+  (if (empty-agenda? the-agenda)
+      'done
+      (begin
+        ((first-agenda-item the-agenda))      ;; 첫번째 item 실행
+        (remove-first-agenda-item the-agenda) ;; 첫번째 item 삭제
+        (propagate))))
+
+;; p364 시뮬레이션 해 보기.
+
+(define (probe name wire)
+  (add-action! wire
+               (lambda ()
+                 (newline)
+                 (display name)
+                 (display " ")
+                 (display (current-time the-agenda))
+                 (display "  New-value = ")
+                 (display (get-signal wire))
+                 (newline))))
+
+(define the-agenda (make-agenda))
+(define input-1 (make-wire))
+(define input-2 (make-wire))
+(define sum (make-wire))
+(define carry (make-wire))
+
+(probe 'sum sum)
+
+(set-signal! sum 1)
+(set-signal! sum 0)
+
+;; ex 3.31
+;; make-wire 안쪽의 accept-action-procedure!는 입력된 프로시저를 실행하고 있는데 왜?
+;;
+;;   inverter 프로시저가 실행되면 실행될때의 input에 따라 output이 변경되어야 함
+;;   즉, (inverter wire1 wire2) 로 실행하면, wire1과 wire2로 연결된 inverter 물체가 생기면서
+;;       wire1 상태에 따라 inverter가 동작하여 wire2의 값이 변해야 함.
+;;       위 프로시저를 실행하는 코드의 구현은 wire1이 변경될 때 실행될 프로시저를 add-action!으로 추가하고 있는데
+;;       이 프로시저가 최초 실행시에도 실행되어야 하는 것임. 
+;;
+;; accept-action-procedure! 를 아래처럼 변경하면 수정해야 할 코드
+;;  (define (accept-action-procedure! proc)
+;;    (set! action-procedures (cons proc action-procedures)))
+;; 
+;;   기본 소자(inverter, and-gate, or-gate)를 정의하는 프로시저에서,
+;;   add-action 호출 이후 실제 output을 변경하는 프로시저를 한번 호출해야 함
+;;   아래와 같음.
+;;   (define (inverter input output)
+;;     (define (invert-input)
+;;       (let ((new-value (logical-not (get-signal input))))
+;;         (after-delay inverter-delay
+;;                      (lambda () (set-signal! output new-value)))))
+;;     (add-action! input invert-input)
+;;     (invert-input) ;; 여기!!!!!!
+;;     'ok)
