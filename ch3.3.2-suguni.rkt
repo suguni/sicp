@@ -127,21 +127,21 @@
 (define (print-queue-new queue)
   ((queue 'print)))
 
-(define nq (make-queue-new))
-(insert-queue-new! nq 'a) ;; (a)
-(print-queue-new nq)
-(insert-queue-new! nq 'b) ;; (a b)
-(print-queue-new nq)
-(insert-queue-new! nq 'c) ;; (a b c)
-(print-queue-new nq)
-(insert-queue-new! nq 'd) ;; (a b c d)
-(print-queue-new nq)
-(empty-queue-new? nq)     ;; false
-(front-queue-new nq)      ;; a
-(delete-queue-new! nq)    ;; (b c d)
-(delete-queue-new! nq)    ;; (c d)
-(front-queue-new nq)      ;; c
-(print-queue-new nq)
+;(define nq (make-queue-new))
+;(insert-queue-new! nq 'a) ;; (a)
+;(print-queue-new nq)
+;(insert-queue-new! nq 'b) ;; (a b)
+;(print-queue-new nq)
+;(insert-queue-new! nq 'c) ;; (a b c)
+;(print-queue-new nq)
+;(insert-queue-new! nq 'd) ;; (a b c d)
+;(print-queue-new nq)
+;(empty-queue-new? nq)     ;; false
+;(front-queue-new nq)      ;; a
+;(delete-queue-new! nq)    ;; (b c d)
+;(delete-queue-new! nq)    ;; (c d)
+;(front-queue-new nq)      ;; c
+;(print-queue-new nq)
 
 ;; ex 3.23 double-ended queue 만들기
 ;; 모든 연산이 O(1) 이어야 한다.
@@ -221,21 +221,21 @@
   (iter (front-deque-ptr deque)))
 
 ;; deque 테스트
-(define de-queue (make-deque))
-(empty-deque? de-queue) ;; #t
-
-(rear-insert-deque! de-queue 'a)
-(print-deque de-queue) ;; a
-(newline)
-(rear-insert-deque! de-queue 'b)
-(print-deque de-queue) ;; ab
-(newline)
-(front-insert-deque! de-queue 'c)
-(print-deque de-queue) ;; cab
-(newline)
-(front-insert-deque! de-queue 'd)
-(print-deque de-queue) ;; dcab
-(newline)
-(front-delete-deque! de-queue)
-(print-deque de-queue) ;; cab
-(newline)
+;(define de-queue (make-deque))
+;(empty-deque? de-queue) ;; #t
+;
+;(rear-insert-deque! de-queue 'a)
+;(print-deque de-queue) ;; a
+;(newline)
+;(rear-insert-deque! de-queue 'b)
+;(print-deque de-queue) ;; ab
+;(newline)
+;(front-insert-deque! de-queue 'c)
+;(print-deque de-queue) ;; cab
+;(newline)
+;(front-insert-deque! de-queue 'd)
+;(print-deque de-queue) ;; dcab
+;(newline)
+;(front-delete-deque! de-queue)
+;(print-deque de-queue) ;; cab
+;(newline)
