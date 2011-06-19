@@ -74,7 +74,7 @@
 (define (and-gate a1 a2 output)
   (define (and-action-procedure)
     (let ((new-value (logical-and (get-signal a1) (get-signal a2))))
-      (after-delay and-delay
+      (after-delay and-gate-delay
                    (lambda () (set-signal! output new-value)))))
   (add-action! a1 and-action-procedure)
   (add-action! a2 and-action-procedure)
@@ -82,7 +82,7 @@
 
 (define (logical-and a1 a2)
   (cond ((not (or (valid-signal? a1) (valid-signal? a2))) (error "Invalid signal" a1 a2))
-        ((and (= a1 1) (=a2 1)) 1)
+        ((and (= a1 1) (= a2 1)) 1)
         (else 0)))
 
 (define (valid-signal? s)
@@ -92,7 +92,7 @@
 (define (or-gate a1 a2 output)
   (define (or-action-procedure)
     (let ((new-value (logical-or (get-signal a1) (get-signal a2))))
-      (after-delay and-delay
+      (after-delay or-gate-delay
                    (lambda () (set-signal! output new-value)))))
   (add-action! a1 or-action-procedure)
   (add-action! a2 or-action-procedure)
@@ -100,11 +100,11 @@
 
 (define (logical-or a1 a2)
   (cond ((not (or (valid-signal? a1) (valid-signal? a2))) (error "Invalid signal" a1 a2))
-        ((or (= a1 1) (=a2 1)) 1)
+        ((or (= a1 1) (= a2 1)) 1)
         (else 0)))
 
 ;; ex 3.29
-(define (or-gate2 a1 a2 output)
+(define (or-gate-2 a1 a2 output)
   (let ((i1 (make-wire))
         (i2 (make-wire))
         (e1 (make-wire)))
@@ -201,24 +201,6 @@
              (call-each (cdr procedures)))))
 
 ;; p363 시간표
-(define (make-agenda)
-  '())
-
-(define (empty-agenda? agenda)
-  '())
-
-(define (first-agenda-item agenda)
-  '())
-
-(define (remove-first-agenda-item agenda)
-  '())
-
-(define (add-to-agenda! time action agenda)
-  'done)
-
-(define (current-time agenda)
-  '())
-
 ;; 이상한데... the-agenda 뭥미..
 
 (define (after-delay delay proc)
@@ -228,15 +210,24 @@
 
 ;; 어디 쓰지?
 (define (propagate)
-  (if (empty-agenda? the-agenda)
-      'done
-      (begin
-        ((first-agenda-item the-agenda))      ;; 첫번째 item 실행
-        (remove-first-agenda-item the-agenda) ;; 첫번째 item 삭제
-        (propagate))))
+  (let ((cnt 0))
+    (define (iter)
+      (if (empty-agenda? the-agenda)
+          'done
+          (begin
+            (set! cnt (+ cnt 1))
+            ((first-agenda-item the-agenda))      ;; 첫번째 item 실행
+            (remove-first-agenda-item! the-agenda) ;; 첫번째 item 삭제
+            (display the-agenda)
+            (newline)
+            (iter))))
+    (display the-agenda)
+    (newline)
+    (iter)
+    (display "count : ")
+    (display cnt )))
 
 ;; p364 시뮬레이션 해 보기.
-
 (define (probe name wire)
   (add-action! wire
                (lambda ()
@@ -247,17 +238,6 @@
                  (display "  New-value = ")
                  (display (get-signal wire))
                  (newline))))
-
-(define the-agenda (make-agenda))
-(define input-1 (make-wire))
-(define input-2 (make-wire))
-(define sum (make-wire))
-(define carry (make-wire))
-
-(probe 'sum sum)
-
-(set-signal! sum 1)
-(set-signal! sum 0)
 
 ;; ex 3.31
 ;; make-wire 안쪽의 accept-action-procedure!는 입력된 프로시저를 실행하고 있는데 왜?
@@ -283,3 +263,89 @@
 ;;     (add-action! input invert-input)
 ;;     (invert-input) ;; 여기!!!!!!
 ;;     'ok)
+
+;; p366 시간표 만들기
+
+;; 3.3.2 의 queue 사용
+(load "ch3.3.2-suguni.rkt")
+
+(define (make-time-segment time queue) (cons time queue))
+(define (segment-time s) (car s))
+(define (segment-queue s) (cdr s))
+
+(define (make-agenda) (list 0))
+(define (current-time agenda) (car agenda))
+(define (set-current-time! agenda time) (set-car! agenda time))
+(define (segments agenda) (cdr agenda))
+(define (set-segments! agenda segments) (set-cdr! agenda segments))
+(define (first-segment agenda) (car (segments agenda)))
+(define (rest-segments agenda) (cdr (segments agenda)))
+(define (empty-agenda? agenda) (null? (segments agenda)))
+
+(define (add-to-agenda! time action agenda)
+  
+  (define (belongs-before? segments time)
+    (or (null? segments)
+        (< time (segment-time (car segments)))))
+  
+  (define (make-new-time-segment time action)
+    (let ((q (make-queue)))
+      (insert-queue! q action)
+      (make-time-segment time q)))
+  
+  (define (add-to-segments! segments time action)
+    (let ((segment (car segments)))
+      (if (= time (segment-time segment))
+          (insert-queue! (segment-queue segment) action)
+          (let ((rest (cdr segments)))
+            (if (belongs-before? rest time)
+                (set-cdr! segments
+                          (cons (make-new-time-segment time action) rest))
+                (add-to-segments! rest time action))))))
+  
+  (let ((segments (segments agenda)))
+    (if (belongs-before? segments time) ;; 현재 segments 보다 앞선 time 인지?
+        (set-segments! agenda
+                       (cons (make-new-time-segment time action)
+                             segments))
+        (add-to-segments! segments time action))))
+
+(define (remove-first-agenda-item! agenda)
+  (if (not (empty-agenda? agenda))
+      (let ((q (segment-queue (first-segment agenda))))
+        (delete-queue! q)
+        (if (empty-queue? q)
+            (set-segments! agenda (rest-segments agenda))))))
+
+(define (first-agenda-item agenda)
+  (if (empty-agenda? agenda)
+      (error "Agenda is empty -- FIRST AGENDA-ITEM")
+      (let ((segment (first-segment agenda)))
+        (set-current-time! agenda (segment-time segment))
+        (front-queue (segment-queue segment)))))
+
+;; p364 시뮬레이션 해 보기
+(define the-agenda (make-agenda))
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
+
+(define input-1 (make-wire))
+(define input-2 (make-wire))
+(define sum (make-wire))
+(define carry (make-wire))
+
+(probe 'sum sum)
+(probe 'carry carry)
+(probe 'input-1 input-1)
+(probe 'input-2 input-2)
+
+;; (and-gate input-1 input-2 sum)
+;; (inverter sum carry)
+(half-adder input-1 input-2 sum carry)
+
+;; (set-signal! input-1 1)
+;; (propagate)
+
+;; (newline)
+;; (get-signal sum)
