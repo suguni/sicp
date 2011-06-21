@@ -261,7 +261,7 @@
                         ;; Probe: Input B = 6.0
 
 ;; ex 3.34
-;; ???
+;; B로 부터 입력이 들어갈 경우 multiplier의 process-new-value 프로시저 내 cond 조건에 맞는게 없어서, a가 계산 안된다.
 
 ;; ex 3.35, squarer를 기본 관계로 정의하기
 (define (squarer a b)
@@ -307,7 +307,7 @@
                          ;; Probe: Input X1 = 5
 
 ;; ex 3.36
-;; ???
+;; ??? SKIP
 
 ;; ex 3.37
 (define (celsius-fahrenheit-converter-exp x)
@@ -318,6 +318,11 @@
 (define (c+ x y)
   (let ((z (make-connector)))
     (adder x y z)
+    z))
+
+(define (c- x y)
+  (let ((z (make-connector)))
+    (adder z y x)
     z))
 
 (define (c* x y)
