@@ -78,3 +78,22 @@
 ;> 직접적인 balance 에 큰영향은 없지만, withdraw 또는 deposit 프로세스 중 balance를 확인하는 타이밍에 정상적이지 않은 (이전의) 값을 가져오게 된다.
 ;> 즉, balance 1000 상황에서 병행으로 withdraw 100 / balance 실행이되면 balance가 1000 그대로 보여질 수 있다.
 
+;; ex 3.42
+(define (make-account-3 balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (let ((protected (make-serializer)))
+    (let ((protected-withdraw (protected withdraw))
+	  (protected-deposit (protected deposit)))
+      (define (dispatch m)
+	(cond ((eq? m 'withdraw) protected-withdraw)
+	      ((eq? m 'deposit) protected-deposit)
+	      ((eq? m 'balance) balance)))
+      dispatch)))
+;> make-serializer 구현에 대한 이해가 먼저 필요
