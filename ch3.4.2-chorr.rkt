@@ -34,7 +34,6 @@
             (#t (error "Unknown request -- MAKE-ACCOUNT" m))
             ))
     dispatch))
-(define mm (make-account 1000))
   
 ;; ex 3.39
 (define (parallel-case3)
@@ -98,3 +97,86 @@
 	      ((eq? m 'balance) balance)))
       dispatch)))
 ;> make-serializer 구현에 대한 이해가 먼저 필요
+
+
+
+;; 줄 세우개 만들기
+(define (make-serializer-2)
+  (let ((mutex (make-mutex)))
+    (lambda (p)
+      (define (serialized-p . args)
+        (mutex 'acquire)
+        (let ((val (apply p args)))
+          (mutex 'release)
+          val))
+      serialized-p)))
+
+(define (make-mutex)
+  (let ((cell (make-cell #f)))            
+    (define (the-mutex m)
+      (cond ((eq? m 'acquire)
+             (if (test-and-set! cell)
+                 (the-mutex 'acquire)))
+            ((eq? m 'release) (clear! cell))))
+    the-mutex))
+
+
+;; 여러 자원을 함께 쓰는 문제
+(define (exchange account1 account2)
+  (let ((difference (- (account1 'balance)
+                       (account2 'balance))))
+    ((account1 'withdraw) difference)
+    ((account2 'deposit) difference)))
+
+(define (make-account-and-serializer balance id)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (let ((balance-serializer (make-serializer-2)))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) withdraw)
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'balance) balance)
+            ((eq? m 'serializer) balance-serializer)
+            ((eq? m 'id) id)
+            (#t (error "Unknown request -- MAKE-ACCOUNT"
+                         m))))
+    dispatch))
+
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer)))
+    ((serializer1 (serializer2 exchange))
+     account1
+     account2)))
+
+(define acc1 (make-account-and-serializer 100 1))
+(define acc2 (make-account-and-serializer 200 2))
+(define acc3 (make-account-and-serializer 300 3))
+;; deadlock
+;(parallel-execute (lambda () (serialized-exchange acc1 acc2))
+;                  (lambda () (serialized-exchange acc2 acc1)))
+
+
+;; deadlock-avoidance
+(define (serialized-exchange-2 account1 account2) 
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer)))
+    (if (< (account1 'id) (account2 'id))
+        ((serializer2 (serializer1 exchange))
+         account2
+         account1)
+        ((serializer1 (serializer2 exchange))
+         account1
+         account2))
+    (display (cons (account1 'balance) (account2 'balance)))
+    (newline)
+    ))
+
+(parallel-execute (lambda () (serialized-exchange-2 acc1 acc2))
+                  (lambda () (serialized-exchange-2 acc2 acc1)))
