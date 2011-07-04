@@ -31,10 +31,11 @@
       (cond ((eq? m 'withdraw) (protected withdraw))
             ((eq? m 'deposit) (protected deposit))
             ((eq? m 'balance) balance)
-            ;(else (error "Unknown request -- MAKE-ACCOUNT" m))
+            (#t (error "Unknown request -- MAKE-ACCOUNT" m))
             ))
     dispatch))
-
+(define mm (make-account 1000))
+  
 ;; ex 3.39
 (define (parallel-case3)
   (define x 10)
@@ -43,7 +44,7 @@
                     (s (lambda () (set! x (+ x 1)))))
   (display x)
   (newline))
-; 101, 121, 11 : 총 3가지
+; 101, 121, 11, 100 : 총 4가지
 ; P1 에서 set! 하기 직전 P2 가 실행되어(x=10 으로 판단) 최종적으로 11 이라는 엉뚱한 결과를 보인다.
 
 ;; ex 3.40
