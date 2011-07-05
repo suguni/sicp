@@ -73,7 +73,9 @@
 ;; p399 여러 자원을 함께 쓰는 문제
 
 ;; ex 3.43
-;; ???
+;; 1. exchange가 serialize 되어 있을때. - 제대로 계산된다.
+;; 2. deposit, withdraw만 serialize 되어 있을때. - 전체 계정의 합이 일치하는것만 보장.
+;; 3. 아무것도 serialize 되어 있을때. - 난리난다.
 
 ;; ex 3.44
 ;; 1. Louis가 옳은가?
@@ -89,23 +91,23 @@
 ;; 이 상황에서는 exchange가 완료되지 않은 상태라 deposit 또는 withdraw를 실행할 수 없고,
 ;; exchange 프로세스가 종료되지 않게 된다.
 
-(define (make-account-and-serialize balance)
-  (define (withdraw amount)
-    (if (>= balance amount)
-        (begin (set! balance (- balance amount))
-               balance)
-        "Insufficient funds"))
-  (define (deposit amount)
-    (set! balance (+ balance amount))
-    balance)
-  (let ((balance-serializer (make-serializer-2)))
-    (define (dispatch m)
-      (cond ((eq? m 'withdraw) (balance-serializer withdraw))
-            ((eq? m 'deposit) (balance-serializer deposit))
-            ((eq? m 'balance) balance)
-            ((eq? m 'serializer) balance-serializer)
-            (#t (error ("Unknown request -- MAKE-ACCOUNT" m)))))
-    dispatch))
+;(define (make-account-and-serialize balance)
+;  (define (withdraw amount)
+;    (if (>= balance amount)
+;        (begin (set! balance (- balance amount))
+;               balance)
+;        "Insufficient funds"))
+;  (define (deposit amount)
+;    (set! balance (+ balance amount))
+;    balance)
+;  (let ((balance-serializer (make-serializer-2)))
+;    (define (dispatch m)
+;      (cond ((eq? m 'withdraw) (balance-serializer withdraw))
+;            ((eq? m 'deposit) (balance-serializer deposit))
+;            ((eq? m 'balance) balance)
+;            ((eq? m 'serializer) balance-serializer)
+;            (#t (error ("Unknown request -- MAKE-ACCOUNT" m)))))
+;    dispatch))
 
 (define (exchange acc1 acc2)
   (let ((diff (- (acc1 'balance)
@@ -124,7 +126,9 @@
 ;; 잠깜만..
 
 ;; p404 줄 세우개 만들기
-(define (make-serializer)
+
+;; sicp-concurrency.ss 에 있는 make-serializer 사용하면 안되서..
+(define (make-serializer-1)
   (let ((mutex (make-mutex)))
     (lambda (p)
       (define (serialized-p . args)
@@ -134,8 +138,9 @@
           val))
       serialized-p)))
 
+;; sicp-concurrency.ss에 make-mutex 없음
 (define (make-mutex)
-  (let ((cell (list #f)))
+  (let ((cell (make-cell #f)))
     (define (the-mutex m)
       (cond ((eq? m 'acquire)
              (if (test-and-set! cell)
@@ -143,14 +148,14 @@
             ((eq? m 'release) (clear! cell))))
     the-mutex))
 
-(define (clear! cell)
-  (set-car! cell #f))
-
-(define (test-and-set! cell)
-  (if (car cell)
-      #t
-      (begin (set-car! cell #t)
-             #f)))
+;(define (clear! cell)
+;  (set-car! cell #f))
+;
+;(define (test-and-set! cell)
+;  (if (car cell)
+;      #t
+;      (begin (set-car! cell #t)
+;             #f)))
 
 ;; ex 3.46
 ;; test-and-set! 이 알갱이 연산으로 만들어지지 않으면?
@@ -165,11 +170,20 @@
 
 ;; ex 3.48
 ;; 아래의 경우 엇걸림이 발생할 수 있다.
-(define (deadlock-text)
+(define (deadlock-test)
   (define account1 (make-account 100))
   (define account2 (make-account 200))
   (parallel-execute (lambda () (serialized-exchange account1 account2))
-                    (lambda () (serialized-exchange account2 account1))))
+                    (lambda () (serialized-exchange account2 account1)))) ;; 삑!!!!
+
+(define (deadlock-pass-test)
+  (define account1 (make-account 100))
+  (define account2 (make-account 200))
+  (parallel-execute (lambda () (serialized-exchange-an account1 account2))
+                    (lambda () (serialized-exchange-an account2 account1)))
+  (print (account1 'balance))   ;; 100
+  (print (account2 'balance)))  ;; 200
+
 ;; 이를 해결하려면 serialized-exchange 내부에서 account 인자 위치에 상관없이 동일한 방식으로
 ;; serialized 되도록 하면 된다. 이를 위해 account 생성시 고유한 번호를 붙이고,
 ;; serialized-exchange에서 작은 번호의 account의 serializer를 먼저 가져와 exchange를 serialize 되도록 하면 된다.
@@ -199,7 +213,7 @@
           (define (deposit amount)
             (set! balance (+ balance amount))
             balance)
-          (let ((balance-serializer (make-serializer)))
+          (let ((balance-serializer (make-serializer-1)))
             (define (dispatch m)
               (cond ((eq? m 'withdraw) withdraw)
                     ((eq? m 'deposit) deposit)
@@ -212,3 +226,13 @@
 
 ;; ex 3.49
 ;; ???
+
+(define acc1 (make-account 100))
+(define acc2 (make-account 200))
+
+;; (parallel-execute (lambda () (serial-exchange
+(define (deposit account amount)
+  (let ((s (account 'serializer))
+        (d (account 'deposit)))
+    ((s d) amount)))
+
