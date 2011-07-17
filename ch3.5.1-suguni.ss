@@ -58,7 +58,57 @@
 (stream-car
  (stream-cdr
   (stream-filter prime?
-		 (stream-enumerate-interval 10000 100000000))))
+		 (stream-enumerate-interval 4 20))))
+(stream-car
+ (stream-cdr
+  (stream-filter prime?
+		 (cons 4 (delay (stream-enumerate-interval 5 20))))))
+
+(stream-car
+ (stream-cdr
+  (stream-filter prime?
+		 (cons 5 (delay (stream-enumerate-interval 6 20))))))
+(stream-car
+ (stream-cdr
+  (cons-stream 5
+	       (stream-filter prime?
+			      (stream-enumerate-interval 6 20)))))
+(stream-car
+ (stream-cdr
+  (cons-stream 5
+	       (cons-stream 7
+			    (stream-filter prime?
+					   (stream-enumerate-interval 8 20))))))
+(stream-car
+ (cons-stream 7 (stream-filter ...)))
+
+(stream-car
+ (stream-cdr
+  (stream-filter prime? (cons 4 (delay (stream-enumerate-interval 5 20))))))
+
+		 (stream-enumerate-interval 10000 1000000))))
+
+
+(stream-filter prime?
+	       (stream-enumerate-interval 10000 100000000))
+
+(stream-filter prime?
+	       (cons 10000 (delay (stream-enumerate-interval 10001 1000000))))
+;; prime? no
+(stream-filter prime?
+	       (cons 10001 (delay (stream-enumerate-interval 10002 1000000))))
+
+(cons-stream 10001
+	     (stream-filter prime? (stream-enumerate-interval 10002 1000000)))
+
+(cons-stream 10001
+	     (cons-stream 10007
+			  (stream-filter prime? (stream-enumerate-interval 10008 1000000))))
+
+
+
+
+
 
 ;; (stream-enumerate-interval 10000 1000000)
 ;; => (cons-stream 10000 (stream-enumerate-interval 10001 1000000)
@@ -79,6 +129,9 @@
       (cons-stream (proc (stream-car s))
 		   (stream-map proc (stream-cdr)))))
 
+;; (map proc (a b c) (d e f) (g h i))
+;; (apply proc (a d g)) > (proc a d g)
+
 ;; ex 3.50 여러개의 인자를 받을 수 있는 stream-map
 (define (stream-map proc . argstreams)
   (if (stream-null? (car argstreams))
@@ -88,9 +141,9 @@
 	(apply stream-map
 	       (cons proc (map stream-cdr argstreams))))))
 
-(define s1 (cons-stream 1 (cons-stream 2 (cons-stream 3 (cons-stream 4 '())))))
-(define s2 (cons-stream 10 (cons-stream 20 (cons-stream 30 (cons-stream 40 '())))))
-(define s3 (cons-stream 100 (cons-stream 200 (cons-stream 300 (cons-stream 400 '())))))
+(define s1 (cons-stream 1 (cons-stream 2 (cons-stream 3 (cons-stream 4 the-empty-stream)))))
+(define s2 (cons-stream 10 (cons-stream 20 (cons-stream 30 (cons-stream 40 the-empty-stream)))))
+(define s3 (cons-stream 100 (cons-stream 200 (cons-stream 300 (cons-stream 400 the-empty-stream)))))
 
 (stream-ref (stream-map + s1 s2 s3) 3) ;; > 444
 
@@ -159,3 +212,5 @@
 ;; sum = 33 + (6 + 10 + 28 + 36 + 66 + 78 + 120 + 136) + (10 + 15 + 45 + 55 + 105 + 120 + 190 + 210) -- no-memo
 
 ;; memo-proc를 사용하지 않으면 stream-filter 실행될 때마다 accum이 실행되므로 sum이 계속 변경된다.
+
+;; memo-proc을 사용하지 안은 경우 답은 신뢰할 수 없음... 좀 더 고민 필요!!!!
