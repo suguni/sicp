@@ -48,7 +48,7 @@
 (define fibs
   (cons-stream 0
 	       (cons-stream 1
-			    (add-streams (stream-dr fibs)
+			    (add-streams (stream-cdr fibs)
 					 fibs))))
 
 ;; scale-stream
@@ -101,4 +101,86 @@
 				       (scale-stream S 5)))))
 
 ;; ex 3.57
-;; 
+;; pass
+
+;; ex 3.58
+(define (expand num den radix)
+  (cons-stream
+   (quotient (* num radix) den)
+   (expand (remainder (* num radix) den) den radix)))
+
+;; quotient는 몫을 반환하는 프로시저
+(quotient 5 2)  ;; > 2
+(quotient 10 3) ;; > 3
+
+;; remainder는 나머지를 반환하는 프로시저
+(remainder 5 2) ;; > 1
+
+;; (expand 3 8 10) > (3 7 5 0 0 0 ... )
+;; 3 / 8 = 0.3750
+;; (expand 1 7 10) > (1 4 2 8 5 7 1 4 2 8 5 7 1 ... )
+;; 1 / 7 = 0.1428571428571...
+
+;; 해석
+;; radix(진수)에서의 num / den
+
+;; ex 3.59
+(define (over-series-from-n n)
+  (cons-stream (/ 1 n) (over-series-from-n (+ n 1))))
+
+(define over-series (over-series-from-n 1))
+
+(define (integrate-series coeffs)
+  (mul-streams coeffs over-series))
+
+(define exp-series
+  (cons-stream 1 (integrate-series exp-series)))
+
+;; derive sine > cosine
+;; derive cosine > - sine
+
+(define cosine-series
+  (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
+
+(define sine-series
+  (cons-stream 0  (integrate-series cosine-series)))
+
+(stream-ref cosine-series 0) ;;  1
+(stream-ref cosine-series 2) ;; -0.5
+(stream-ref cosine-series 4) ;;  0.0416667
+
+(stream-ref sine-series 1) ;;  1
+(stream-ref sine-series 3) ;; -0.16667
+(stream-ref sine-series 5) ;;  0.00833
+
+;; ex 3.60
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+	       (add-streams (mul-series s1 (stream-cdr s2))
+			    (scale-stream (stream-cdr s1) (stream-car s2)))))
+
+;; sin^2(x) + cos^2(x) = 1
+(define test
+  (add-streams (mul-series sine-series sine-series)
+	       (mul-series cosine-series cosine-series))) ;; > (1 0 0 0 ... )
+
+;; ??? 정확한건지???
+;; 실제로는 
+;; (stream-ref test 4) >> 5.55111512312578e-17
+;; (stream-ref test 16) >> -2.06795153138257e-25
+
+;; ex 3.61 -- how to check???
+(define (invert-unit-series s)
+  (cons-stream 1
+	       (scale-stream (mul-series (stream-cdr s)
+					 (invert-unit-series s))
+			     -1)))
+
+;; ex 3.62
+(define (div-series s1 s2)
+  (if (= (stream-car s2) 0)
+      (error "divide by 0" "DIV-SERIES")
+      (mul-series s1 (invert-unit-series s2))))
+
+;; tan x = (sin x) / (cos x)
+(define tangent-series (div-series sine-series cosine-series))
