@@ -176,7 +176,7 @@
 					 (invert-unit-series s))
 			     -1)))
 
-;; ex 3.62
+;; ex 3.62 ???
 (define (div-series s1 s2)
   (if (= (stream-car s2) 0)
       (error "divide by 0" "DIV-SERIES")
@@ -184,3 +184,4 @@
 
 ;; tan x = (sin x) / (cos x)
 (define tangent-series (div-series sine-series cosine-series))
+

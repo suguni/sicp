@@ -152,3 +152,31 @@
 ;; 동일한 값임에도 앞서 계산된 값을 이용하지 못하고 새롭게 계산해야 되서
 ;; 효율성이 떨어진다.
 
+
+;; ex 3.64
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+
+;; 별로 이쁘지가 않은데...
+(define (stream-limit stream limit)
+  (if (< (abs (- (stream-car (stream-cdr stream))
+		 (stream-car stream)))
+	 limit)
+      (stream-car stream)
+      (stream-limit (stream-cdr stream) limit)))
+
+
+;; ex 3.65
+(define (ln2-summands n)
+  (cons-stream (/ 1.0 n)
+	       (stream-map - (ln2-summands (+ n 1)))))
+
+(define ln2 (partial-sums (ln2-summands 1)))
+(define ln2-et (euler-transform ln2))
+(define ln2-as (accelerated-sequence euler-transform ln2))
+
+;; ln2-as는 9번째만 되도, 소숫점 15자리까지 맞는 값이 나온다.
+;; 10번째 부터는 divide by 0 에러. 위에서 사용한 pi에서도 그러함.
+;; euler-transform에 (+ (- s0 (* s1 2)) s2) 식이 있는데
+;; s0, s1, s2 가 모두 같은 값이 나오면서 분모가 0라 되는 것임.
+
