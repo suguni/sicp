@@ -1,3 +1,4 @@
+;; test
 ;; sqrt 의 stream 버전
 (define (average x y)
   (/ (+ x y) 2))
