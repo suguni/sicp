@@ -181,3 +181,87 @@
 ;; euler-transform에 (+ (- s0 (* s1 2)) s2) 식이 있는데
 ;; s0, s1, s2 가 모두 같은 값이 나오면서 분모가 0라 되는 것임.
 
+;; p441 쌍으로 이루어진 무한 스트림
+
+(define (prime-sum-pair)
+  (stream-filter (lambda (pair)
+		   (prime? (+ (car pair) (cadr pair))))
+		 int-pairs))
+;; int-pairs는 i<=j 인 모든 정수 쌍(i, j) 차례열
+
+;; (define (square x)
+;;   (* x x))
+
+;; (define (divides? a b)
+;;   (= (remainder b a) 0))
+
+;; (define (smallest-divisor n)
+;;   (find-divisor n 2))
+
+;; (define (find-divisor n test-divisor)
+;;   (cond ((> (square test-divisor) n) n)
+;; 	((divides? test-divisor n) test-divisor)
+;; 	(else (find-divisor n (+ test-divisor 1)))))
+
+;; (define (prime? n)
+;;   (= n (smallest-divisor n)))
+
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+(define integers (integers-starting-from 1))
+
+;; (define int-pairs
+;;   (stream-filter (lambda (pair) (<= (car pair) (cadr pair)))
+;; 		 (stream-map (lambda (x y) (list x y)) (integers) (integers))))
+
+(define (pairs s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+		(stream-cdr t))
+    (pairs (stream-cdr s) (stream-cdr t)))))
+
+;; 이렇게 정의하면 s1이 무한이므로 s2값은 하나도 못가져온다.
+(define (stream-append s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+		   (stream-append (stream-cdr s1) s2))))
+
+;; 이렇게 가져와야 s1과 s2가 섞여서 합쳐진다. 위의 pairs에서도 interleave를 사용해야 한다.
+;; 문제: 순서가 의미가 있는경우... 그 순서를 어떻게 표현할 것인가?
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+		   (interleave s2 (stream-cdr s1)))))
+
+(define int-pairs (pairs integers integers))
+
+;; ex 3.66
+;; int-pairs를 위에서 세 조각으로 구성한 방식으로 보면,
+;; 1,1 - 1
+;; 1,n - 짝수번째, (n-1)*2 번째 쌍
+;; 기타 (s, t) - 홀수번째이고 아래 수식으로 계산할 수 있다.
+;; (define (idx s t)
+;;   (let ((s1 (- s 1))
+;; 	(t1 (- t 1)))
+;;     (+ (- (* (+ (/ (* t1 (- t1 1)) 2) s1)
+;; 	     2)
+;; 	  1)
+;;        2)))
+;; 합쳐서 생각해보면
+(define (pair-index s t)
+  (cond ((and (= s 1) (= t 1)) 1)
+	((= s 1) (* (- t 1) 2))
+	(else 
+	 (let ((s1 (- s 1))
+	       (t1 (- t 1)))
+	   (+ (- (* (+ (/ (* t1 (- t1 1)) 2) s1)
+		    2)
+		 1)
+	      2)))))
+
+;; ex 3.67
