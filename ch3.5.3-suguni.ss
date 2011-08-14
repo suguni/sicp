@@ -222,7 +222,7 @@
     (stream-map (lambda (x) (list (stream-car s) x))
 		(stream-cdr t))
     (pairs (stream-cdr s) (stream-cdr t)))))
-
+ 
 ;; 이렇게 정의하면 s1이 무한이므로 s2값은 하나도 못가져온다.
 (define (stream-append s1 s2)
   (if (stream-null? s1)
@@ -265,3 +265,55 @@
 	      2)))))
 
 ;; ex 3.67
+;; i <= j 조건 없는 정수 쌍 스트림
+(define (pairs-all s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (pairs-all (stream-cdr s) (stream-cdr t))
+    (interleave
+     (stream-map (lambda (x) (list (stream-car s) x))
+		 (stream-cdr t))
+     (stream-map (lambda (x) (list x (stream-car t)))
+		 (stream-cdr s))))))
+
+(define (pairs-all2 s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+		 (stream-cdr t))
+    (interleave
+     (stream-map (lambda (x) (list x (stream-car t)))
+		 (stream-cdr s))
+     (pairs-all2 (stream-cdr s) (stream-cdr t))))))
+
+  ;; (interleave
+  ;;  (stream-map (lambda (x) (list (stream-car s) x)) t)
+  ;;  (pairs-all (stream-cdr s) t))
+
+(define sub-b (stream-filter (lambda (pair) (> (car pair) (cadr pair)))
+			      (pairs-all integers integers)))
+
+
+(define sub-b2 (stream-filter (lambda (pair) (> (car pair) (cadr pair)))
+			      (pairs-all2 integers integers)))
+
+;; 맞는건가??? 무한 시퀀스이므로 검증할 수 없음.
+
+;; ex 3.68
+;; pairs를 아래와 같이 정의하면?
+(define (pairs-2 s t)
+  (interleave
+   (stream-map (lambda (x) (list (stream-car s) x)) t)
+   (pairs-2 (stream-cdr s) (stream-cdr t))))
+;; 첫번째 행과 대각만 가져온다. X
+
+;; pairs-2 실행하면 무한 반복된다.
+;; pairs의 경우 항상 cons-stream으로 묶어주므로
+;; pairs를 재귀 호출되더라도 바로 stream를 얻어올 수 있는데 반해
+;; 위의 경우는 stream-car를 얻기 위해 다시 interleave를 실행해야 하고,
+;; 이러면 다시 pairs-2가 호출된다.
+;; interleave는 special form이 아니므로 프로시저에 전달되기 전에 평가된다.
+;; 무한 스트림은 stream-cdr의 평가가 지연되는 것만을 뜻하므로 위의 상황과는 관련 없다.
+
