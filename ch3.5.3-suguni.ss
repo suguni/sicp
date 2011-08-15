@@ -317,3 +317,137 @@
 ;; interleave는 special form이 아니므로 프로시저에 전달되기 전에 평가된다.
 ;; 무한 스트림은 stream-cdr의 평가가 지연되는 것만을 뜻하므로 위의 상황과는 관련 없다.
 
+;; ex 3.69
+(define (triples s t u)
+  (cons-stream
+   (list (stream-car s) (stream-car t) (stream-car u))
+   (interleave
+    (stream-map (lambda (pair) (cons (stream-car s) pair))
+		(pairs t (stream-cdr u)))
+    (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+;; 모르겠어서... http://wqzhang.wordpress.com/2009/08/22/sicp-exercise-3-69/
+
+(define int-triples (triples integers integers integers))
+
+(define pythagorean-triples
+  (stream-filter (lambda (triple)
+		   (let ((i (car triple))
+			 (j (cadr triple))
+			 (k (caddr triple)))
+		     (= (+ (* i i) (* j j)) (* k k))))
+		 int-triples))
+
+;; ex 3.70
+;; 쌍의 순서를 지정할 수 있는 pairs 프로시저를 짜라.
+;; 쌍을 합칠 때 3.56의 merge 프로시저를 변형한 프로시저를 쓰면 된다.
+(define (weighted-pairs s t weight)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (merge-weighted
+    (stream-map (lambda (x) (list (stream-car s) x))
+		(stream-cdr t))
+    (weighted-pairs (stream-cdr s) (stream-cdr t) weight)
+    weight)))
+
+(define (merge-weighted s1 s2 weight)
+  (cond ((stream-null? s1) s2)
+	((stream-null? s2) s1)
+	(else
+	 (let ((s1car (stream-car s1))
+	       (s2car (stream-car s2)))
+	   (cond ((< (weight s1car) (weight s2car))
+		  (cons-stream s1car (merge-weighted (stream-cdr s1) s2 weight)))
+		 ((>= (weight s1car) (weight s2car))
+		  (cons-stream s2car (merge-weighted s1 (stream-cdr s2) weight))))))))
+		 ;; (else
+		 ;;  (cons-stream s1car
+		 ;; 	       (merge-weighted (stream-cdr s1)
+		 ;; 			       (stream-cdr s2)
+		 ;; 			       weight))))))))
+
+;; a. 무게 함수가 i+j 인 것.
+(define int-pairs-1 (weighted-pairs integers integers
+				    (lambda (pair)
+				      (+ (car pair) (cadr pair)))))
+;; 이렇게 정의하면 (1 1), (1 2), (1 3), ... 으로 만들어진다. X
+;; (1 3)과 (2 2)가 동일한 무게이므로 (2 2)를 무시하게 된다. X
+;; merge-weighted 함수를 잘못 만든 것인가? X
+;; 기존 merge의 경우 값이 동일한 경우 두 stream에서 모두 제거하고 다시 merge하는데,
+;; 위와 같이 변경하면 weight가 동일하더라도 모두 포함된다.
+
+;; b. 2, 3, 5로 나눠떨어지지 않는 수의 쌍, 무게 함수는 2i + 3j + 5ij
+(define int-pairs-2 
+  (let ((values (stream-filter
+		 (lambda (i) (and (not (= (remainder i 2) 0))
+				  (not (= (remainder i 3) 0))
+				  (not (= (remainder i 5) 0))))
+		 integers)))
+    (weighted-pairs values values
+		    (lambda (pair)
+		      (+ (* 2 (car pair))
+			 (* 3 (cadr pair))
+			 (* 5 (car pair) (cadr pair)))))))
+;; 아래 순서임.
+;; (1 1), (1 7), (1 11), (1 13), (1 17), (1 19), (1 23), (1 29), (1 31), (7 7), (1 37)  
+
+;; ex 3.71
+(define ramanujan-numbers
+  ((lambda ()
+    (define (cubic-sum pair)
+      (+ (* (car pair) (car pair) (car pair))
+	 (* (cadr pair) (cadr pair) (cadr pair))))
+
+    (define (iter s)
+      (let ((scar (stream-car s))
+	    (scdr (stream-cdr s)))
+	(let ((cv1 (cubic-sum scar))
+	      (cv2 (cubic-sum (stream-car scdr))))
+	  (if (= cv1 cv2)
+	      (cons-stream (list cv1 scar (stream-car scdr))
+			   (iter (stream-cdr scdr)))
+	      (iter scdr)))))
+
+    (iter (weighted-pairs integers integers cubic-sum)))))
+
+;; 결과
+;; (stream-ref ramanujan-numbers 5)
+;; (39312 (15 33) (2 34))
+;; (stream-ref ramanujan-numbers 4)
+;; (32832 (18 30) (4 32))
+;; (stream-ref ramanujan-numbers 3)
+;; (20683 (19 24) (10 27))
+;; (stream-ref ramanujan-numbers 2)
+;; (13832 (18 20) (2 24))
+;; (stream-ref ramanujan-numbers 1)
+;; (4104 (9 15) (2 16))
+;; (stream-ref ramanujan-numbers 0)
+;; (1729 (9 10) (1 12))
+
+;; ex 3.72
+(define (ramanujan-triples)
+  (define (cubic-sum pair)
+    (+ (* (car pair) (car pair) (car pair))
+       (* (cadr pair) (cadr pair) (cadr pair))))
+  
+  (define (iter s)
+    (let ((scar (stream-car s))
+	  (scdr (stream-cdr s))
+	  (scddr (stream-cdr (stream-cdr s))))
+      (let ((cv1 (cubic-sum scar))
+	    (cv2 (cubic-sum (stream-car scdr)))
+	    (cv3 (cubic-sum (stream-car scddr))))
+	(if (= cv1 cv2 cv3)
+	    (cons-stream (list cv1 scar (stream-car scdr) (stream-car scddr))
+			 (iter (stream-cdr scddr)))
+	    (iter scdr)))))
+
+    (iter (weighted-pairs integers integers cubic-sum)))
+
+;; 첫번째 값,
+;; (87539319 (255 414) (228 423) (167 436))
+;; 무자게 오래 걸린다. Macbook Pro 2GHz Intel i7에서 대략 5분 45초 걸림. ^^;
+
+;; http://www.durangobill.com/Ramanujan.html 에 보면
+;; Taxicab(4) is thus 6963472309248. The new version of the ramanujans.c program (see below) took 30 seconds to find Taxicab(4). (3GHz Pentium 4 running Windows XP) 
+;; 라고 되어 있는데, 이것보다 한참은 느린듯.
+;; 잘못 짠걸까?
