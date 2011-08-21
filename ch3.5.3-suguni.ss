@@ -450,3 +450,83 @@
 ;; Taxicab(4) is thus 6963472309248. The new version of the ramanujans.c program (see below) took 30 seconds to find Taxicab(4). (3GHz Pentium 4 running Windows XP) 
 ;; 라고 되어 있는데, 이것보다 한참은 느린듯.
 ;; 잘못 짠걸까?
+
+;; p447 신호를 표현하는 스트림
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+		 (add-streams (scale-stream integrand dt)
+			      int)))
+  int)
+
+;; ex3.73
+(define (RC R C dt)
+  (define (proc i-stream v0)
+    (add-streams
+     (integral (scale-stream i-stream (/ 1 C)) v0 dt)
+     (scale-stream i-stream R)))
+  proc)
+
+(define RC1 (RC 5 1 0.5))
+
+;; ex 3.74
+(define (make-stream list)
+  (if (stream-null? list)
+      the-empty-stream
+      (cons-stream (car list)
+		   (make-stream (cdr list)))))
+
+;; mock data
+(define sense-data (make-stream (list 1 2 1.5 1 0.5 -0.1 -2 -3 -2 -0.5 0.2 3 4)))
+(define (sign-change-detector current last)
+  (cond  ((and (> last 0) (< current 0)) -1)
+	 ((and (< last 0) (> current 0)) 1)
+	 (else 0)))
+
+(define (make-zero-crossing input-stream last-value)
+  (cons-stream
+   (sign-change-detector (stream-car input-stream) last-value)
+   (make-zero-crossing (stream-cdr input-stream)
+		       (stream-car input-stream))))
+;; (define zero-crossing (make-zero-crossing sense-data 0))
+
+(define zero-crossing
+  (stream-map sign-change-detector
+	      sense-data
+	      (cons-stream 0 sense-data)))
+
+;; ex 3.75
+;; 책에 있는 잘못되었다고한 코드
+(define (make-zero-crossing input-stream last-value)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-value)
+		 (make-zero-crossing (stream-cdr input-stream)
+				     avpt))))
+
+;; 문제 의미 파악: 옛 값과 평균한다는 의미가 무엇?
+;;   책의 코드에서는 이전에 평균된 값과 다시 평균을 하는데,
+;;   이게 아니라 바로 이전값과 평균해야 한다. 이렇게 보고 문제를 풀어보면
+(define (make-zero-crossing input-stream last-value last-avpt)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-avpt)
+		 (make-zero-crossing (stream-cdr input-stream)
+				     (stream-car input-stream)
+				     avpt))))
+
+;; ex 3.76
+;; smooth 필터 만들고, 필터 프로시저를 인자로 전달할 수 있게 수정
+(define (smooth input)
+  (let ((in-car (stream-car input))
+	(in-cdr (stream-cdr input)))
+    (cons-stream
+     (/ (+ in-car (stream-car in-cdr)) 2)
+     (smooth in-cdr))))
+
+(define (make-zero-crossing input-stream filter)
+  (define (proc input-stream last-value)
+    (cons-stream
+     (sign-change-detector (stream-car input-stream) last-value)
+     (proc (stream-cdr input-stream)
+	   (stream-car input-stream))))
+  (proc (filter input-stream) 0))
+
