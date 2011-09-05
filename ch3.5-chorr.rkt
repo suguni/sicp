@@ -127,14 +127,22 @@
 	(apply stream-map
 	       (cons proc (map stream-cdr argstreams))))))
 
-(define (add-stream s1 s2)
+(define (add-streams s1 s2)
   (stream-map + s1 s2))
+
+(define integers-by-add (cons-stream 1 (add-streams ones integers)))
+
+(define fibs-by-add
+  (cons-stream 0
+               (cons-stream 1
+                            (add-streams (stream-cdr fibs-by-add)
+                                         fibs-by-add))))
 
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
 
 ;; ex 3.53
-(define s (cons-stream 1 (add-stream s s)))
+(define stm (cons-stream 1 (add-streams stm stm)))
 
 ;; ex 3.54
 (define (mul-stream s1 s2)
@@ -145,8 +153,46 @@
 
 ;; ex 3.55
 (define (partial-sums s)
-  (define iter
-    (cons-stream (stream-car s)
-                 (add-stream iter
-                             (stream-cdr s))))
-  iter)
+  (cons-stream (stream-car s)
+               (add-streams (partial-sums s)
+                            (stream-cdr s))))
+;; ex 3.56
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+         (let ((s1car (stream-car s1))
+               (s2car (stream-car s2)))
+           (cond ((< s1car s2car)
+                  (cons-stream s1car (merge (stream-cdr s1) s2)))
+                 ((> s1car s2car)
+                  (cons-stream s2car (merge s1 (stream-cdr s2))))
+                 (else
+                  (cons-stream s1car
+                               (merge (stream-cdr s1)
+                                      (stream-cdr s2)))))))))
+
+;(define S (cons-stream 1 (merge (scale-stream S 2) 
+;                                (merge (scale-stream S 3)
+;                                       (scale-stream S 5)))))
+
+;; ex 3.57
+; N(m) = N(m-1) + N(m-2)
+; N(m-1), N(m-2) 상황을 매번 실행하게 되면 지수승 증가
+
+;; ex 3.58
+(define (expand num den radix)
+  (cons-stream
+   (quotient (* num radix) den)
+   (expand (remainder (* num radix) den) den radix)))
+
+; (stream-range (expand 1 7 10) 5)
+; (stream-range (expand 3 8 10) 5)
+
+(define (stream-range s n)
+  (display "stream : ")
+  (display (stream-car s))
+  (newline)
+  (if (= n 0)
+      (stream-car s)
+      (stream-range (stream-cdr s) (- n 1))))
