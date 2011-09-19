@@ -251,3 +251,60 @@
   (stream-map stream-car
               (make-tableau transform s)))
 ; (display-stream (accelerated-sequence euler-transform pi-stream))
+
+;; ex 3.63
+(define (sqrt-stream-ex x)
+  (cons-stream 1.0
+               (stream-map (lambda (guess)
+                             (sqrt-improve guess x))
+                           (sqrt-stream-ex x))))
+
+;; ex 3.64
+(define (sqrt-t x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+
+; source : http://wqzhang.wordpress.com/2009/08/12/sicp-exercise-3-64/
+(define (stream-limit s tolerance)
+  (let ((s2 (stream-cdr s)))
+    (if (< (abs (- (stream-car s)
+                   (stream-car s2)))
+           tolerance)
+        (stream-car s2)
+        (stream-limit s2 tolerance))))
+
+;; ex 3.65
+; source : http://wqzhang.wordpress.com/2009/08/12/sicp-exercise-3-65/
+(define (log2-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (log2-summands (+ n 1)))))
+
+(define log2-stream
+  (partial-sums (log2-summands 1)))
+
+(define accelerated-log2-stream
+  (accelerated-sequence euler-transform log2-stream))
+
+;;; 쌍으로 이루어진 무한 스트림
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (interleave s2 (stream-cdr s1)))))
+
+(define (pairs s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+                (stream-cdr t))
+    (pairs (stream-cdr s) (stream-cdr t)))))
+
+(define int-pairs
+  (pairs integers integers))
+
+(define custom-pairs 
+  (stream-filter (lambda (pair)
+                 (prime? (+ (car pair) (cadr pair))))
+               int-pairs))
+
+
