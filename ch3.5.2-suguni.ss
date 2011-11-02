@@ -80,6 +80,12 @@
 			      sums)))
   sums)
 
+;; 이렇게도... 위 코드가 더 좋은거 같음.
+(define (partial-sums s)
+  (cons-stream (stream-car s)
+	       (add-streams (stream-cdr s) (partial-sums s))))
+
+
 ;; ex 3.56
 ;; 2, 3, 5 외의 소수 인수를 가지지 않는 양의 정수
 ;; 아래것들에 해당
@@ -101,7 +107,12 @@
 				       (scale-stream S 5)))))
 
 ;; ex 3.57
-;; pass
+;; 1. n번째 피보나치 수를 구할때 덧셈회수
+;;    첫번째와 두번째는 정의되어 있는 값이고, 그 다음부터 덧셈 발생되므로
+;;    n-2번 덧샘 발생 ???
+;; 2. memo-proc하지 않는 경우는 지수비례로 증가함 증명
+;;    왜 이게 틀릴까?
+
 
 ;; ex 3.58
 (define (expand num den radix)
@@ -133,6 +144,9 @@
 (define (integrate-series coeffs)
   (mul-streams coeffs over-series))
 
+;; (define (integrate-series coeffs C)
+;;   (cons-stream C (mul-streams coeffs over-series)))
+
 (define exp-series
   (cons-stream 1 (integrate-series exp-series)))
 
@@ -154,10 +168,24 @@
 (stream-ref sine-series 5) ;;  0.00833
 
 ;; ex 3.60
+;; X!!!
 (define (mul-series s1 s2)
   (cons-stream (* (stream-car s1) (stream-car s2))
-	       (add-streams (mul-series s1 (stream-cdr s2))
-			    (scale-stream (stream-cdr s1) (stream-car s2)))))
+	       (add-streams
+		(mul-series s1 (stream-cdr s2))
+		(scale-stream (stream-cdr s1) 
+			      (stream-car s2)))))
+
+;; OK
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+               (add-streams
+                (add-streams (scale-stream (stream-cdr s1)
+                                           (stream-car s2))
+                             (scale-stream (stream-cdr s2)
+                                           (stream-car s1)))
+                (cons-stream 0 (mul-series (stream-cdr s1)
+                                           (stream-cdr s2))))))
 
 ;; sin^2(x) + cos^2(x) = 1
 (define test
@@ -168,13 +196,28 @@
 ;; 실제로는 
 ;; (stream-ref test 4) >> 5.55111512312578e-17
 ;; (stream-ref test 16) >> -2.06795153138257e-25
+;; 두번째 mul-series로 풀면 문제 없다.
 
-;; ex 3.61 -- how to check???
+;; ex 3.61 -- how to check??? mul-series가 문제없으므로 확인 가능.
 (define (invert-unit-series s)
   (cons-stream 1
 	       (scale-stream (mul-series (stream-cdr s)
 					 (invert-unit-series s))
 			     -1)))
+
+
+
+;; 위와 동일
+;; (define minus-one
+;;   (cons-stream -1 minus-one))
+
+;; (define (mul-stream s1 s2)
+;;   (stream-map * s1 s2))
+
+;; (define (invert-unit-series s)
+;;   (define X
+;;     (cons-stream 1 (mul-stream minus-one (mul-series (stream-cdr s) X))))
+;;   X)
 
 ;; ex 3.62 ???
 (define (div-series s1 s2)
@@ -185,3 +228,11 @@
 ;; tan x = (sin x) / (cos x)
 (define tangent-series (div-series sine-series cosine-series))
 
+
+;; 9/3 UC Berkeley Stream 2
+;; (define integers (stream-range 1))
+;; (define (sieve s)
+;;   (cons-stream (stream-car s)
+;; 	       (sieve (stream-filter
+;; 		       (lambda (x) (not (divisible? x (stream-car s))))
+;; 		       (stream-cdr s)))))

@@ -51,6 +51,13 @@
     (cons-stream (- s2 (/ (square (- s2 s1)) (+ (- s0 (* s1 2)) s2)))
 		 (euler-transform (stream-cdr s)))))
 
+(define (euler-transform-2 s)
+  (let ((s0 (stream-ref s 0))
+	(s1 (stream-ref s 1))
+	(s2 (stream-ref s 2)))
+    (cons-stream (- s2 (/ (square (- s2 s1)) (+ (- s0 (* s1 2)) s2)))
+		 (euler-transform (stream-cdr (stream-cdr (stream-cdr s)))))))
+
 ;; tableau
 (define (make-tableau transform s)
   (cons-stream s
@@ -162,9 +169,19 @@
   (if (< (abs (- (stream-car (stream-cdr stream))
 		 (stream-car stream)))
 	 limit)
-      (stream-car stream)
+      (stream-car (stream-cdr stream))
       (stream-limit (stream-cdr stream) limit)))
 
+;; (define (diff-stream stream)
+;;   (cons-stream (abs (- (stream-car stream)
+;; 		       (stream-car (stream-cdr stream))))
+;; 	       (diff-stream (stream-cdr stream))))
+
+;; (define (stream-limit stream limit)
+;;   (let ((d (diff-stream stream)))
+;;     (if (< (stream-ref d i) limit)
+;; 	(stream-ref stream i)
+;; 	adlkfjasld)))
 
 ;; ex 3.65
 (define (ln2-summands n)
@@ -252,6 +269,7 @@
 ;; 	  1)
 ;;        2)))
 ;; 합쳐서 생각해보면
+;; !!! 잘못되었다.
 (define (pair-index s t)
   (cond ((and (= s 1) (= t 1)) 1)
 	((= s 1) (* (- t 1) 2))
