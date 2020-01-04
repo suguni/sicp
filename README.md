@@ -1,8 +1,6 @@
-# Hello World Header 1
+# Structure and Interpretation of Computer Programs, 2nd
 
-* hello world list item
-* test item 2
-*
+https://mitpress.mit.edu/sites/default/files/sicp/index.html
 
 # Markdown
 
