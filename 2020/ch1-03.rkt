@@ -176,3 +176,10 @@
   (- (cont-frac2 (lambda (i) (- (expt x i)))
                  (lambda (i) (- (* 2 i) 1))
                  k)))
+
+(define (average x y)
+  (/ (+ x y) 2.0))
+
+(define (average-damp f)
+  (lambda (x) (average x (f x))))
+
